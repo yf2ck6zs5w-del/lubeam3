@@ -260,7 +260,7 @@
     <div id="purchasedStockModal" class="modal-overlay">
       <div class="modal-content" style="text-align: center; padding: 22px;">
         <h3 style="margin-bottom: 6px; font-size: 1.1rem; color:var(--btn-brown);">🎉 สั่งซื้อสำเร็จและได้รับสินค้าแล้ว</h3>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">ข้อมูลสินค้าที่คุณได้รับ (จัดเรียงตามสต็อกเป๊ะๆ):</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">ข้อมูลสินค้าที่คุณได้รับ:</p>
         <div id="purchasedStockListContent" style="font-size: 0.8rem; background: var(--card-cream); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 14px; max-height: 200px; overflow-y: auto; text-align: left; font-family: monospace; white-space: pre-wrap; word-break: break-all; color: #3d261c; line-height: 1.6;"></div>
         <button class="btn-action" onclick="copyPurchasedStock()" style="margin-bottom: 6px; background: #27ae60;"><i class="fa-regular fa-copy"></i> คัดลอกข้อมูลสินค้าทั้งหมด</button>
         <button class="form-control" onclick="closePurchasedStockModal()" style="background: #eee; color:var(--text-brown); border: none; cursor: pointer; font-weight: 600; border-radius: 20px; padding: 8px;">ปิดหน้าต่าง</button>
@@ -325,6 +325,7 @@
       adminCredit: 100000,
       users: [],
       products: [],
+      featuredIds: [],
       cart: [],
       topupHistory: [],
       orderHistory: [],
@@ -348,7 +349,6 @@
 
     function saveData() {
       localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
-      localStorage.setItem('LUVBEAM_STORE_DATA', JSON.stringify(storeData));
     }
 
     function showPopup(title, msg) {
@@ -414,7 +414,14 @@
       document.getElementById('userCreditBalance').innerText = displayCredit.toFixed(2);
       document.getElementById('profileCreditDisplay').innerText = displayCredit.toFixed(2);
 
-      renderProducts(storeData.products, 'productGridContainer');
+      // กรองสินค้าแนะนำ (Featured) มาแสดงที่หน้าแรก ถ้าไม่มีการเลือก ให้แสดงทั้งหมด
+      let featuredList = storeData.products;
+      if(storeData.featuredIds && storeData.featuredIds.length > 0) {
+        let temp = storeData.products.filter(p => storeData.featuredIds.includes(p.id));
+        if(temp.length > 0) featuredList = temp;
+      }
+
+      renderProducts(featuredList, 'productGridContainer');
       renderProducts(storeData.products, 'allProductsGridContainer');
       renderCart();
       renderFaqFrontend();
