@@ -36,12 +36,6 @@
     .welcome-banner { margin: 0 16px 16px 16px; background: linear-gradient(135deg, #5c4033, #2c1810); color: #fff; padding: 20px; border-radius: 16px; }
     .welcome-banner h3 { font-size: 1.2rem; margin-bottom: 2px; color: #ffd700; }
 
-    .stats-container { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; padding: 0 16px; margin-bottom: 16px; }
-    .stat-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; display: flex !important; align-items: center; justify-content: space-between !important; }
-    .stat-info h4 { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; }
-    .stat-info .number { font-weight: 700; font-size: 1.1rem; color: var(--text-brown); }
-    .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-
     .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 16px; }
     .product-card { background: var(--card-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; cursor: pointer; position: relative; }
     .product-img-box { width: 100%; height: 140px; background: var(--card-cream); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
@@ -110,37 +104,6 @@
         <div class="welcome-banner">
           <div style="font-size: 0.8rem; opacity: 0.9;">ยินดีต้อนรับสู่</div>
           <h3 id="heroStoreName">luvbeamshop</h3>
-        </div>
-      </div>
-
-      <div class="stats-container">
-        <div class="stat-box">
-          <div class="stat-info">
-            <h4>คำสั่งซื้อทั้งหมด</h4>
-            <div class="number" id="statTotalOrders">0</div>
-          </div>
-          <div class="stat-icon" style="background: #ffe4e6; color: #e11d48;"><i class="fa-solid fa-bag-shopping"></i></div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-info">
-            <h4>สินค้าในสต็อก</h4>
-            <div class="number" id="statTotalStock">0</div>
-          </div>
-          <div class="stat-icon" style="background: #e0f2fe; color: #0284c7;"><i class="fa-solid fa-box"></i></div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-info">
-            <h4>สมาชิกทั้งหมด</h4>
-            <div class="number" id="statTotalUsers">0</div>
-          </div>
-          <div class="stat-icon" style="background: #fef3c7; color: #d97706;"><i class="fa-solid fa-users"></i></div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-info">
-            <h4>รายการ</h4>
-            <div class="number" id="statTotalTx">0</div>
-          </div>
-          <div class="stat-icon" style="background: #f3e8ff; color: #9333ea;"><i class="fa-solid fa-receipt"></i></div>
         </div>
       </div>
 
@@ -373,19 +336,6 @@
       document.getElementById('headerStoreName').innerText = storeData.storeName || 'luvbeamshop';
       document.getElementById('heroStoreName').innerText = storeData.storeName || 'luvbeamshop';
 
-      let totalOrders = storeData.orderHistory ? storeData.orderHistory.length : 0;
-      let totalStock = 0;
-      if(storeData.products) {
-        storeData.products.forEach(p => { if(p.stockList) totalStock += p.stockList.length; });
-      }
-      let totalUsers = storeData.users ? storeData.users.length : 0;
-      let totalTx = (storeData.topupHistory ? storeData.topupHistory.length : 0) + totalOrders;
-
-      document.getElementById('statTotalOrders').innerText = totalOrders;
-      document.getElementById('statTotalStock').innerText = totalStock;
-      document.getElementById('statTotalUsers').innerText = totalUsers;
-      document.getElementById('statTotalTx').innerText = totalTx;
-
       let displayCredit = 0;
       if(storeData.currentUser) {
         document.getElementById('loggedInAccountView').style.display = 'block';
@@ -414,7 +364,6 @@
       document.getElementById('userCreditBalance').innerText = displayCredit.toFixed(2);
       document.getElementById('profileCreditDisplay').innerText = displayCredit.toFixed(2);
 
-      // กรองสินค้าแนะนำ (Featured) มาแสดงที่หน้าแรก ถ้าไม่มีการเลือก ให้แสดงทั้งหมด
       let featuredList = storeData.products;
       if(storeData.featuredIds && storeData.featuredIds.length > 0) {
         let temp = storeData.products.filter(p => storeData.featuredIds.includes(p.id));
