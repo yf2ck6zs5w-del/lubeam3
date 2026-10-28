@@ -172,7 +172,7 @@
         </div>
       </div>
 
-      <!-- TAB 5: PRODUCTS -->
+      <!-- TAB 5: PRODUCTS (แบ่ง 1 สต็อกด้วยการเว้นบรรทัด Enter ว่าง) -->
       <div id="tab-products" class="panel-view">
         <div class="card">
           <div style="font-weight: 700; margin-bottom: 10px;">📦 เพิ่มสินค้าใหม่</div>
@@ -306,7 +306,6 @@
       logoUrl: '',
       themeColor: '#8c5a3c',
       products: [],
-      featuredIds: [],
       users: [],
       banners: [],
       faq: [],
@@ -323,13 +322,10 @@
 
     function loadData() {
       const data = localStorage.getItem('POTATO_STORE_DATA');
-      if(data) {
-        try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){}
-      }
+      if(data) storeData = Object.assign(storeData, JSON.parse(data));
       if(!storeData.topupHistory) storeData.topupHistory = [];
       if(!storeData.orderHistory) storeData.orderHistory = [];
       if(!storeData.faq) storeData.faq = [];
-      if(!storeData.featuredIds) storeData.featuredIds = [];
       if(!storeData.themeColor) storeData.themeColor = '#8c5a3c';
     }
 
@@ -381,17 +377,17 @@
       updateStockCountPreview('newProdStock', 'newProdStockCountBadge');
 
       renderAdminProducts();
-      renderFeaturedChecklist();
       renderBanners();
       renderUsers();
       renderFaq();
       renderTopupHistory();
       renderOrderHistory();
-      loadBankSettingsToForm();
     }
 
+    // ฟังก์ชันแปลงข้อความในกล่องสต็อก ให้แบ่งเป็นชุดๆ ด้วยการเว้นบรรทัดว่าง (Double Enter / \n\n)
     function parseStockByDoubleNewline(text) {
       if(!text) return [];
+      // แยกด้วยการเว้นบรรทัดว่าง (บล็อกข้อมูลที่คั่นด้วยบรรทัดว่าง)
       return text.split(/\n\s*\n/).map(s => s.trim()).filter(s => s !== '');
     }
 
@@ -468,46 +464,12 @@
       `).join('');
     }
 
-    function renderFeaturedChecklist() {
-      const container = document.getElementById('featuredProductsCheckList');
-      if(!container) return;
-      if(!storeData.products || storeData.products.length === 0) {
-        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">ยังไม่มีสินค้าสำหรับเลือกเป็นสินค้าแนะนำ</p>`;
-        return;
-      }
-      if(!storeData.featuredIds) storeData.featuredIds = [];
-
-      container.innerHTML = storeData.products.map(p => {
-        let isChecked = storeData.featuredIds.includes(p.id);
-        return `
-          <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <input type="checkbox" id="feat_${p.id}" ${isChecked ? 'checked' : ''} onchange="toggleFeatured(${p.id})" style="width:16px; height:16px; cursor:pointer;">
-              <label for="feat_${p.id}" style="font-size:0.85rem; cursor:pointer; margin-bottom:0;">${p.name}</label>
-            </div>
-            <span style="font-size:0.75rem; color:var(--text-muted);">฿${p.price}</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function toggleFeatured(id) {
-      if(!storeData.featuredIds) storeData.featuredIds = [];
-      let idx = storeData.featuredIds.indexOf(id);
-      if(idx > -1) {
-        storeData.featuredIds.splice(idx, 1);
-      } else {
-        storeData.featuredIds.push(id);
-      }
-      saveData();
-      showPopup("สำเร็จ", "อัปเดตรายการสินค้าแนะนำเรียบร้อย");
-    }
-
     function openStockModal(id) {
       editingStockProductId = id;
       let p = storeData.products.find(item => item.id === id);
       if(p) {
         document.getElementById('stockModalTitle').innerText = "จัดการสต็อก: " + p.name;
+        // นำสต็อกแต่ละชิ้นมาต่อกันด้วยการเว้น 2 บรรทัด (Enter 2 ครั้ง) เพื่อแสดงผลใน Textarea แบบชุดข้อมูล
         document.getElementById('modalStockTextarea').value = p.stockList ? p.stockList.join('\n\n') : '';
         updateStockCountPreview('modalStockTextarea', 'modalStockCountBadge');
         document.getElementById('stockModal').classList.add('open');
@@ -571,9 +533,6 @@
 
     function deleteProduct(id) {
       storeData.products = storeData.products.filter(p => p.id !== id);
-      if(storeData.featuredIds) {
-        storeData.featuredIds = storeData.featuredIds.filter(fid => fid !== id);
-      }
       saveData();
       renderAllAdmin();
       showPopup("สำเร็จ", "ลบสินค้าเรียบร้อยแล้ว");
@@ -717,24 +676,11 @@
 
     function saveBankSettings() {
       let bankName = document.getElementById('bankNameInput').value;
-      let accName = document.getElementById('bankAccNameInput').value;
+      let accName = document.getElementById('bankAccNameInput'.value);
       let bankAcc = document.getElementById('bankAccNoInput').value;
       let qrUrl = document.getElementById('bankQrInput').value;
       localStorage.setItem('POTATO_ADMIN_SETTINGS', JSON.stringify({ bankName, accName, bankAcc, qrUrl }));
       showPopup("สำเร็จ", "บันทึกข้อมูลการชำระเงินเรียบร้อย");
-    }
-
-    function loadBankSettingsToForm() {
-      try {
-        let saved = localStorage.getItem('POTATO_ADMIN_SETTINGS');
-        if(saved) {
-          let obj = JSON.parse(saved);
-          if(obj.bankName) document.getElementById('bankNameInput').value = obj.bankName;
-          if(obj.accName) document.getElementById('bankAccNameInput').value = obj.accName;
-          if(obj.bankAcc) document.getElementById('bankAccNoInput').value = obj.bankAcc;
-          if(obj.qrUrl) document.getElementById('bankQrInput').value = obj.qrUrl;
-        }
-      } catch(e){}
     }
 
     function saveApiKey() {
