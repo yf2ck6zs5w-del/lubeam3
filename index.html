@@ -57,7 +57,7 @@
     .add-cart-btn { background: var(--card-cream); border: 1px solid var(--border-color); color: var(--text-brown); width: 100%; border-radius: 8px; height: 28px; font-size: 0.75rem; cursor: pointer; font-weight: 600; margin-top: 4px; }
     .add-cart-btn.disabled { opacity: 0.4; cursor: not-allowed; background: #eee; }
 
-    .bottom-nav { position: fixed !important; bottom: 0 !important; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex !important; justify-content: space-around !important; padding: 8px 0 10px 0; z-index: 9999 !important; }
+    .bottom-nav { position: fixed !important; bottom: 0 !important; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex !important; justify-around: space-around !important; padding: 8px 0 10px 0; z-index: 9999 !important; }
     .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 0.75rem; gap: 2px; cursor: pointer; text-decoration: none; position: relative; }
     .nav-item i { display: block; font-size: 1.2rem; margin-bottom: 2px; }
     .nav-item.active { color: var(--primary-color); font-weight: 600; }
@@ -252,7 +252,7 @@
         <p id="ruleModalProductName" style="font-weight: 700; font-size: 0.95rem; color: var(--btn-brown); margin-bottom: 6px;"></p>
         <p id="ruleModalProductPrice" style="font-weight: 700; font-size: 0.9rem; color: var(--primary-color); margin-bottom: 10px;"></p>
         <div id="ruleModalContent" style="font-size: 0.8rem; background: var(--card-cream); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 14px; max-height: 140px; overflow-y: auto; text-align: left; color:var(--text-muted); line-height: 1.4;"></div>
-        <button class="btn-action" onclick="confirmAddToCart()" style="margin-top: 0; background: var(--btn-brown);">เพิ่มลงตะกร้า 🛒</button>
+        <button class="btn-action" id="confirmAddBtn" onclick="confirmAddToCart()" style="margin-top: 0; background: var(--btn-brown);">เพิ่มลงตะกร้า 🛒</button>
         <button class="form-control" onclick="closeRuleModal()" style="margin-top: 8px; background: #f3e8dd; color:var(--text-brown); border: none; cursor: pointer; font-weight: 600; border-radius: 20px; padding: 8px;">ปิด</button>
       </div>
     </div>
@@ -270,7 +270,7 @@
       </div>
     </div>
 
-    <!-- Modal ดูประวัติ (ประวัติการสั่งซื้อ / ประวัติเติมเงิน) -->
+    <!-- Modal ดูประวัติ -->
     <div id="fullHistoryModal" class="modal-overlay">
       <div class="modal-content" style="text-align: left; max-width: 400px; padding: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -346,18 +346,30 @@
     };
 
     function loadFromStorage() {
-      const data = localStorage.getItem('LUVBEAM_STORE_DATA');
-      if(data) {
-        storeData = Object.assign(storeData, JSON.parse(data));
+      // ดึงข้อมูลตรงกับทุกคีย์ที่เป็นไปได้จากระบบหลังร้าน
+      let keys = ['LUVBEAM_STORE_DATA', 'POTATO_STORE_DATA', 'STORE_DATA', 'beam_shop_data'];
+      let foundData = null;
+
+      for (let k of keys) {
+        let d = localStorage.getItem(k);
+        if (d) {
+          try {
+            foundData = JSON.parse(d);
+            break;
+          } catch(e) {}
+        }
       }
-      const oldData = localStorage.getItem('POTATO_STORE_DATA');
-      if(!data && oldData) {
-        storeData = Object.assign(storeData, JSON.parse(oldData));
+
+      if (foundData) {
+        storeData = Object.assign(storeData, foundData);
       }
     }
 
     function saveData() {
-      localStorage.setItem('LUVBEAM_STORE_DATA', JSON.stringify(storeData));
+      let dataStr = JSON.stringify(storeData);
+      localStorage.setItem('LUVBEAM_STORE_DATA', dataStr);
+      localStorage.setItem('POTATO_STORE_DATA', dataStr);
+      localStorage.setItem('STORE_DATA', dataStr);
     }
 
     function showPopup(title, msg) {
@@ -384,7 +396,10 @@
       let totalOrders = storeData.orderHistory ? storeData.orderHistory.length : 0;
       let totalStock = 0;
       if(storeData.products) {
-        storeData.products.forEach(p => { if(p.stockList) totalStock += p.stockList.length; });
+        storeData.products.forEach(p => { 
+          let count = p.stockList ? p.stockList.length : (p.stocks ? p.stocks.length : (p.stock || 0));
+          totalStock += count;
+        });
       }
       let totalUsers = storeData.users ? storeData.users.length : 0;
       let totalTx = (storeData.topupHistory ? storeData.topupHistory.length : 0) + totalOrders;
@@ -400,7 +415,7 @@
         document.getElementById('loggedOutAccountView').style.display = 'none';
 
         if(storeData.currentUser === ADMIN_EMAIL) {
-          displayCredit = storeData.adminCredit || 100000;
+          displayCredit = storeData.adminCredit !== undefined ? storeData.adminCredit : 100000;
           document.getElementById('adminMenuBtnContainer').style.display = 'block';
           document.getElementById('profileUsernameInput').value = "Admin (เจ้าของร้าน)";
           document.getElementById('profileEmailInput').value = ADMIN_EMAIL;
@@ -449,16 +464,19 @@
         return;
       }
       container.innerHTML = items.map(p => {
-        let stockCount = p.stockList ? p.stockList.length : 0;
+        let stockList = p.stockList || p.stocks || [];
+        let stockCount = Array.isArray(stockList) ? stockList.length : (p.stock || 0);
         let isAvail = stockCount > 0;
+        let imgSrc = p.image || p.img || '';
+
         return `
-          <div class="product-card" onclick="promptAddToCart(${p.id})">
+          <div class="product-card" onclick="promptAddToCart('${p.id}')">
             <div class="product-img-box">
               <span class="stock-badge ${isAvail ? 'in' : 'out'}">${isAvail ? 'มีสินค้า ('+stockCount+')' : 'สินค้าหมด'}</span>
-              ${p.image ? `<img src="${p.image}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=No+Image';">` : '<i class="fa-solid fa-box" style="font-size:2rem; color:var(--text-muted);"></i>'}
+              ${imgSrc ? `<img src="${imgSrc}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=No+Image';">` : '<i class="fa-solid fa-box" style="font-size:2rem; color:var(--text-muted);"></i>'}
             </div>
             <div class="product-info">
-              <div class="product-name">${p.name}</div>
+              <div class="product-name">${p.name || p.title}</div>
               <div class="product-price">฿${p.price}.-</div>
               <button class="add-cart-btn ${isAvail ? '' : 'disabled'}">${isAvail ? 'ดูรายละเอียด' : 'สินค้าหมด'}</button>
             </div>
@@ -468,22 +486,37 @@
     }
 
     function promptAddToCart(id) {
-      let p = storeData.products.find(item => item.id === id);
+      let p = storeData.products.find(item => String(item.id) === String(id));
       if(p) {
         pendingAddToCartProductId = id;
-        document.getElementById('ruleModalProductName').innerText = p.name;
+        document.getElementById('ruleModalProductName').innerText = p.name || p.title;
         document.getElementById('ruleModalProductPrice').innerText = `ราคา: ฿${p.price}.-`;
-        document.getElementById('ruleModalContent').innerText = p.rule || "รายละเอียดสินค้า: ไม่มีกฎระเบียบหรือรายละเอียดพิเศษเพิ่มเติม โปรดตรวจสอบความถูกต้องก่อนสั่งซื้อ";
+        document.getElementById('ruleModalContent').innerText = p.rule || p.details || p.description || "รายละเอียดสินค้า: ไม่มีกฎระเบียบหรือรายละเอียดพิเศษเพิ่มเติม โปรดตรวจสอบความถูกต้องก่อนสั่งซื้อ";
         
         let imgEl = document.getElementById('ruleModalImg');
         let iconEl = document.getElementById('ruleModalDefaultIcon');
-        if(p.image) {
-          imgEl.src = p.image;
+        let imgSrc = p.image || p.img || '';
+        
+        if(imgSrc) {
+          imgEl.src = imgSrc;
           imgEl.style.display = 'block';
           iconEl.style.display = 'none';
         } else {
           imgEl.style.display = 'none';
           iconEl.style.display = 'block';
+        }
+
+        let stockList = p.stockList || p.stocks || [];
+        let stockCount = Array.isArray(stockList) ? stockList.length : (p.stock || 0);
+        let confirmBtn = document.getElementById('confirmAddBtn');
+        if(stockCount <= 0) {
+          confirmBtn.innerText = 'สินค้าหมด';
+          confirmBtn.style.opacity = '0.5';
+          confirmBtn.onclick = null;
+        } else {
+          confirmBtn.innerText = 'เพิ่มลงตะกร้า 🛒';
+          confirmBtn.style.opacity = '1';
+          confirmBtn.onclick = confirmAddToCart;
         }
 
         document.getElementById('productRuleModal').classList.add('open');
@@ -497,13 +530,17 @@
 
     function confirmAddToCart() {
       if(!pendingAddToCartProductId) return;
-      let p = storeData.products.find(item => item.id === pendingAddToCartProductId);
-      if(p && p.stockList && p.stockList.length > 0) {
-        storeData.cart.push(p);
-        saveData();
-        closeRuleModal();
-        showPopup("สำเร็จ", `เพิ่ม "${p.name}" ลงตะกร้าแล้ว`);
-        renderAll();
+      let p = storeData.products.find(item => String(item.id) === String(pendingAddToCartProductId));
+      if(p) {
+        let stockList = p.stockList || p.stocks || [];
+        let stockCount = Array.isArray(stockList) ? stockList.length : (p.stock || 0);
+        if(stockCount > 0) {
+          storeData.cart.push(p);
+          saveData();
+          closeRuleModal();
+          showPopup("สำเร็จ", `เพิ่ม "${p.name || p.title}" ลงตะกร้าแล้ว`);
+          renderAll();
+        }
       }
     }
 
@@ -517,15 +554,16 @@
       }
       let total = 0;
       container.innerHTML = storeData.cart.map((c, idx) => {
-        total += c.price;
+        total += parseFloat(c.price || 0);
+        let imgSrc = c.image || c.img || '';
         return `
           <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; margin-bottom:8px; background:#fff; border:1px solid var(--border-color); border-radius:var(--radius-md);">
             <div style="display:flex; align-items:center; gap:10px;">
               <div style="width:40px; height:40px; border-radius:8px; background:var(--card-cream); overflow:hidden; display:flex; align-items:center; justify-content:center;">
-                ${c.image ? `<img src="${c.image}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">` : '<i class="fa-solid fa-box" style="color:var(--text-muted);"></i>'}
+                ${imgSrc ? `<img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">` : '<i class="fa-solid fa-box" style="color:var(--text-muted);"></i>'}
               </div>
               <div>
-                <div style="font-weight:600; font-size:0.85rem;">${c.name}</div>
+                <div style="font-weight:600; font-size:0.85rem;">${c.name || c.title}</div>
                 <div style="font-size:0.8rem; color:var(--btn-brown);">฿${c.price}.-</div>
               </div>
             </div>
@@ -543,8 +581,8 @@
 
     function checkout() {
       if(!storeData.currentUser) return showPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนชำระเงิน");
-      let total = storeData.cart.reduce((sum, item) => sum + item.price, 0);
-      let currentCred = storeData.currentUser === ADMIN_EMAIL ? (storeData.adminCredit || 100000) : (storeData.users.find(u => u.email === storeData.currentUser)?.credit || 0);
+      let total = storeData.cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
+      let currentCred = storeData.currentUser === ADMIN_EMAIL ? (storeData.adminCredit !== undefined ? storeData.adminCredit : 100000) : (storeData.users.find(u => u.email === storeData.currentUser)?.credit || 0);
 
       if(currentCred < total) return showPopup("เครดิตไม่พอ", "ยอดเครดิตของคุณไม่เพียงพอ กรุณาเติมเครดิตก่อนทำรายการ");
 
@@ -557,17 +595,23 @@
 
       let receivedItemsText = "";
       storeData.cart.forEach(c => {
-        let prod = storeData.products.find(p => p.id === c.id);
-        if(prod && prod.stockList && prod.stockList.length > 0) {
-          let stockItem = prod.stockList.shift();
-          receivedItemsText += `${stockItem}\n`;
-        } else {
-          receivedItemsText += `(${c.name}: สินค้าหมดสต็อก)\n`;
+        let prod = storeData.products.find(p => String(p.id) === String(c.id));
+        if(prod) {
+          let stockList = prod.stockList || prod.stocks;
+          if(Array.isArray(stockList) && stockList.length > 0) {
+            let stockItem = stockList.shift();
+            receivedItemsText += `${stockItem}\n`;
+          } else if(prod.stock > 0) {
+            prod.stock -= 1;
+            receivedItemsText += `(${prod.name || prod.title}: ชำระเงินเรียบร้อยแล้ว)\n`;
+          } else {
+            receivedItemsText += `(${c.name || c.title}: สินค้าหมดสต็อก)\n`;
+          }
         }
       });
 
       lastPurchasedStockText = receivedItemsText.trim();
-      let itemNames = storeData.cart.map(c => c.name).join(', ');
+      let itemNames = storeData.cart.map(c => c.name || c.title).join(', ');
 
       if(!storeData.orderHistory) storeData.orderHistory = [];
       storeData.orderHistory.unshift({
@@ -697,7 +741,7 @@
       if(isNaN(amt) || amt <= 0) return showPopup("แจ้งเตือน", "กรุณากรอกจำนวนเงินให้ถูกต้อง");
 
       if(storeData.currentUser === ADMIN_EMAIL) {
-        storeData.adminCredit = (storeData.adminCredit || 100000) + amt;
+        storeData.adminCredit = (storeData.adminCredit !== undefined ? storeData.adminCredit : 100000) + amt;
       } else {
         let u = storeData.users.find(x => x.email === storeData.currentUser);
         if(u) u.credit = (u.credit || 0) + amt;
@@ -745,7 +789,7 @@
       let kw = document.getElementById('searchInput').value.toLowerCase();
       if(kw) {
         switchTab('search');
-        let filtered = storeData.products.filter(p => p.name.toLowerCase().includes(kw));
+        let filtered = storeData.products.filter(p => (p.name || p.title || '').toLowerCase().includes(kw));
         renderProducts(filtered, 'searchResultGrid');
       } else {
         switchTab('home');
