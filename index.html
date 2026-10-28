@@ -29,7 +29,6 @@
     .search-box input { width: 100%; padding: 10px 15px 10px 40px; border-radius: 20px; border: 1px solid var(--border-color); background: #fff; outline: none; font-size: 0.85rem; color: var(--text-brown); }
     .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
-    /* Category Filter Pills */
     .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 14px 16px; scrollbar-width: none; }
     .category-scroll::-webkit-scrollbar { display: none; }
     .cat-pill { background: var(--card-bg); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; color: var(--text-brown); white-space: nowrap; cursor: pointer; transition: all 0.2s; }
@@ -55,7 +54,6 @@
     .btn-buy-now { flex: 1; background: var(--btn-brown); color: #fff; border: none; border-radius: 8px; height: 28px; font-size: 0.72rem; cursor: pointer; font-weight: 600; }
     .btn-add-cart { flex: 1; background: var(--card-cream); border: 1px solid var(--border-color); color: var(--text-brown); border-radius: 8px; height: 28px; font-size: 0.72rem; cursor: pointer; font-weight: 600; }
 
-    /* ปุ่มติดต่อไลน์แบบป๊อปอัพวงกลมลอยมุมขวาล่าง */
     .floating-line-btn { position: fixed; bottom: 85px; right: 20px; width: 50px; height: 50px; background: #06c755; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 4px 12px rgba(6,199,85,0.4); z-index: 999; text-decoration: none; transition: transform 0.2s; }
     .floating-line-btn:active { transform: scale(0.9); }
 
@@ -96,7 +94,6 @@
       </div>
     </header>
 
-    <!-- ปุ่มติดต่อไลน์แบบป๊อปอัพวงกลมลอยมุมขวาล่าง -->
     <a href="https://line.me/R/ti/p/@977ojapp" target="_blank" class="floating-line-btn" title="ติดต่อสอบถาม">
       <i class="fa-brands fa-line"></i>
     </a>
@@ -116,7 +113,6 @@
         <input type="text" id="searchInput" placeholder="ค้นหาสินค้า..." onkeyup="filterProducts()">
       </div>
 
-      <!-- แถบหมวดหมู่สินค้า (Category Filter Pills) -->
       <div class="category-scroll" id="categoryPillsContainer">
         <div class="cat-pill active" onclick="filterByCategory('all')">ทั้งหมด</div>
       </div>
@@ -154,15 +150,27 @@
       <div id="loggedOutAccountView">
         <div class="card" style="padding:20px; text-align:center; background:#fff; border:1px solid var(--border-color); border-radius:var(--radius-lg);">
           <h3 id="authModalTitle" style="margin-bottom: 14px;">เข้าสู่ระบบ</h3>
-          <div class="form-group" id="usernameGroup" style="display:none;"><label>ชื่อผู้ใช้งาน:</label><input type="text" id="authUsername" class="form-control"></div>
-          <div class="form-group"><label>อีเมล:</label><input type="email" id="authEmail" class="form-control" placeholder="email@gmail.com"></div>
-          <div class="form-group"><label>รหัสผ่าน:</label><input type="password" id="authPassword" class="form-control"></div>
           
-          <button class="btn-action" id="authSubmitBtn" onclick="handleAuthSubmit()">เข้าสู่ระบบ</button>
+          <div class="form-group" id="usernameGroup" style="display:none;">
+            <label>ชื่อผู้ใช้งาน:</label>
+            <input type="text" id="authUsername" class="form-control" placeholder="ตั้งชื่อผู้ใช้งาน">
+          </div>
           
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 0.78rem;">
+          <div class="form-group">
+            <label>อีเมล:</label>
+            <input type="email" id="authEmail" class="form-control" placeholder="email@gmail.com">
+          </div>
+          
+          <div class="form-group">
+            <label>รหัสผ่าน:</label>
+            <input type="password" id="authPassword" class="form-control" placeholder="••••••••">
+          </div>
+          
+          <button type="button" class="btn-action" id="authSubmitBtn" onclick="handleAuthSubmit()">เข้าสู่ระบบ</button>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 0.78rem;">
             <span onclick="toggleAuthMode()" style="cursor: pointer; color: var(--btn-brown); font-weight: 600;" id="authToggleText">ยังไม่มีบัญชีใช่ไหม? สมัครสมาชิก</span>
-            <span onclick="openForgotModal()" style="cursor: pointer; color: var(--text-muted);">ลืมรหัสผ่าน?</span>
+            <span onclick="openForgotModal()" style="cursor: pointer; color: var(--text-muted);" id="forgotBtnText">ลืมรหัสผ่าน?</span>
           </div>
         </div>
       </div>
@@ -250,12 +258,13 @@
     <div id="forgotModal" class="modal-overlay">
       <div class="modal-content" style="max-width: 320px; text-align: left;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h3 style="font-size: 1rem; color:var(--btn-brown);">รีเซ็ตรหัสผ่าน</h3>
+          <h3 style="font-size: 1rem; color:var(--btn-brown);">ตั้งรหัสผ่านใหม่</h3>
           <i class="fa-solid fa-xmark" style="cursor:pointer; font-size:1.2rem;" onclick="closeForgotModal()"></i>
         </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">กรอกอีเมลบัญชีของคุณและกำหนดรหัสผ่านใหม่ได้ทันที</p>
         <div class="form-group"><label>อีเมลสมาชิก:</label><input type="email" id="forgotEmail" class="form-control" placeholder="email@gmail.com"></div>
         <div class="form-group"><label>รหัสผ่านใหม่:</label><input type="password" id="forgotNewPass" class="form-control" placeholder="รหัสผ่านใหม่"></div>
-        <button class="btn-action" onclick="submitForgotPassword()" style="border-radius: 20px;">ยืนยันเปลี่ยนรหัสผ่าน</button>
+        <button class="btn-action" onclick="submitForgotPassword()" style="border-radius: 20px;">บันทึกรหัสผ่านใหม่</button>
       </div>
     </div>
 
@@ -343,9 +352,17 @@
 
     function loadFromStorage() {
       const data = localStorage.getItem('POTATO_STORE_DATA');
-      if(data) try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){}
+      if(data) {
+        try { 
+          storeData = Object.assign(storeData, JSON.parse(data)); 
+        } catch(e){}
+      }
+      if(!storeData.users) storeData.users = [];
     }
-    function saveData() { localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData)); }
+    
+    function saveData() { 
+      localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData)); 
+    }
 
     function checkSessionTimeout() {
       if(storeData.currentUser && storeData.loginTime) {
@@ -355,7 +372,6 @@
           storeData.currentUser = null;
           storeData.loginTime = null;
           saveData();
-          showPopup("หมดเวลาเข้าสู่ระบบ", "เซสชันหมดอายุ (เกิน 12 ชั่วโมง) กรุณาเข้าสู่ระบบใหม่");
         }
       }
     }
@@ -381,7 +397,7 @@
     function renderAll() {
       loadFromStorage();
       checkSessionTimeout();
-      document.getElementById('headerStoreTitle').innerText = storeData.storeName || 'luvbeamshop';
+      document.getElementById('headerStoreName').innerText = storeData.storeName || 'luvbeamshop';
       document.getElementById('heroStoreName').innerText = storeData.storeName || 'luvbeamshop';
 
       let displayCredit = 0;
@@ -840,6 +856,7 @@
       document.getElementById('authSubmitBtn').innerText = isRegisterView ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
       document.getElementById('authModalTitle').innerText = isRegisterView ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
       document.getElementById('authToggleText').innerText = isRegisterView ? 'มีบัญชีอยู่แล้วใช่ไหม? เข้าสู่ระบบ' : 'ยังไม่มีบัญชีใช่ไหม? สมัครสมาชิก';
+      document.getElementById('forgotBtnText').style.display = isRegisterView ? 'none' : 'inline';
     }
 
     function openForgotModal() { document.getElementById('forgotModal').classList.add('open'); }
@@ -852,7 +869,7 @@
 
       if(email === ADMIN_EMAIL) {
         closeForgotModal();
-        return showPopup("สำเร็จ", "รหัสผ่านแอดมินถูกรีเซ็ตเรียบร้อย (สามารถใช้รหัสใหม่เข้าสู่ระบบได้)");
+        return showPopup("สำเร็จ", "บันทึกรหัสผ่านแอดมินใหม่เรียบร้อยแล้ว");
       }
 
       if(!storeData.users) storeData.users = [];
@@ -862,39 +879,54 @@
       u.pass = newPass;
       saveData();
       closeForgotModal();
-      showPopup("สำเร็จ", "เปลี่ยนรหัสผ่านใหม่เรียบร้อยแล้ว สามารถเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้ทันที");
+      showPopup("สำเร็จ", "เปลี่ยนรหัสผ่านใหม่เรียบร้อยแล้ว สามารถเข้าสู่ระบบได้ทันที");
     }
 
     function handleAuthSubmit() {
       let email = document.getElementById('authEmail').value.trim();
       let pass = document.getElementById('authPassword').value.trim();
       let username = document.getElementById('authUsername').value.trim();
-      if(!email || !pass) return showPopup("แจ้งเตือน", "กรุณากรอกข้อมูลให้ครบถ้วน");
+      
+      if(!email || !pass) return showPopup("แจ้งเตือน", "กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน");
 
+      // กรณีที่ 1: แอดมินล็อกอิน
       if(email === ADMIN_EMAIL) {
         storeData.currentUser = ADMIN_EMAIL;
-      } else {
-        if(!storeData.users) storeData.users = [];
-        
-        if(isRegisterView) {
-          if(!username) return showPopup("แจ้งเตือน", "กรุณากรอกชื่อผู้ใช้งาน");
-          let existing = storeData.users.find(u => u.email === email);
-          if(existing) return showPopup("แจ้งเตือน", "อีเมลนี้ถูกใช้งานแล้ว");
-          
-          storeData.users.push({ username, email, pass, credit: 0, role: 'customer' });
-          storeData.currentUser = email;
-        } else {
-          let found = storeData.users.find(u => u.email === email && u.pass === pass);
-          if(!found) {
-            return showPopup("ผิดพลาด", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-          }
-          storeData.currentUser = found.email;
-        }
+        storeData.loginTime = new Date().getTime();
+        saveData();
+        renderAll();
+        showPopup("สำเร็จ 🛡️", "เข้าสู่ระบบในฐานะแอดมินเรียบร้อยแล้ว");
+        return;
       }
-      storeData.loginTime = new Date().getTime();
-      saveData();
-      renderAll();
-      showPopup("สำเร็จ", isRegisterView ? "สมัครสมาชิกและเข้าสู่ระบบสำเร็จ" : "เข้าสู่ระบบสำเร็จ");
+
+      if(!storeData.users) storeData.users = [];
+
+      // กรณีที่ 2: สมัครสมาชิกใหม่
+      if(isRegisterView) {
+        if(!username) return showPopup("แจ้งเตือน", "กรุณากรอกชื่อผู้ใช้งาน");
+        
+        let existing = storeData.users.find(u => u.email === email);
+        if(existing) return showPopup("แจ้งเตือน", "อีเมลนี้มีในระบบแล้ว กรุณากดเข้าสู่ระบบ");
+
+        storeData.users.push({ username, email, pass, credit: 0, role: 'customer' });
+        storeData.currentUser = email;
+        storeData.loginTime = new Date().getTime();
+        saveData();
+        renderAll();
+        showPopup("สำเร็จ 🎉", "สมัครสมาชิกและเข้าสู่ระบบเรียบร้อยแล้ว");
+      } 
+      // กรณีที่ 3: ลูกค้าทั่วไปเข้าสู่ระบบ
+      else {
+        let found = storeData.users.find(u => u.email === email && u.pass === pass);
+        if(!found) {
+          return showPopup("เข้าสู่ระบบไม่สำเร็จ ❌", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+        }
+        storeData.currentUser = found.email;
+        storeData.loginTime = new Date().getTime();
+        saveData();
+        renderAll();
+        showPopup("สำเร็จ 👍", "เข้าสู่ระบบเรียบร้อยแล้ว");
+      }
     }
 
     function logoutUser() {
@@ -902,7 +934,7 @@
       storeData.loginTime = null;
       saveData();
       renderAll();
-      showPopup("ออกจากระบบ", "ออกจากระบบเรียบร้อย");
+      showPopup("ออกจากระบบ", "ออกจากระบบเรียบร้อยแล้ว");
     }
 
     function filterProducts() {
