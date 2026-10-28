@@ -95,7 +95,6 @@
       <div class="menu-section-title">จัดการระบบร้าน</div>
       <a class="menu-item" onclick="switchTab('settings')"><i class="fa-solid fa-sliders"></i> ตั้งค่าเว็บไซต์ & ธีมสี</a>
       <a class="menu-item" onclick="switchTab('banners')"><i class="fa-solid fa-image"></i> แบนเนอร์</a>
-      <a class="menu-item" onclick="switchTab('featured')"><i class="fa-solid fa-star"></i> สินค้าแนะนำ</a>
 
       <div class="menu-section-title">สินค้าของร้าน</div>
       <a class="menu-item" onclick="switchTab('products')"><i class="fa-solid fa-box"></i> สินค้า + สต็อก (คั่นด้วยบรรทัดว่าง)</a>
@@ -114,7 +113,6 @@
     </div>
 
     <div class="content-body">
-      
       <!-- TAB 1: DASHBOARD -->
       <div id="tab-dashboard" class="panel-view active">
         <div class="stat-grid">
@@ -164,15 +162,7 @@
         <div id="adminBannerList"></div>
       </div>
 
-      <!-- TAB 4: FEATURED -->
-      <div id="tab-featured" class="panel-view">
-        <div class="card">
-          <div style="font-weight: 700; margin-bottom: 10px;">⭐ สินค้าแนะนำหน้าแรก</div>
-          <div id="featuredProductsCheckList"></div>
-        </div>
-      </div>
-
-      <!-- TAB 5: PRODUCTS (แบ่ง 1 สต็อกด้วยการเว้นบรรทัด Enter ว่าง) -->
+      <!-- TAB 5: PRODUCTS -->
       <div id="tab-products" class="panel-view">
         <div class="card">
           <div style="font-weight: 700; margin-bottom: 10px;">📦 เพิ่มสินค้าใหม่</div>
@@ -250,7 +240,6 @@
           <div id="adminUserListContainer"></div>
         </div>
       </div>
-
     </div>
   </div>
 
@@ -322,7 +311,9 @@
 
     function loadData() {
       const data = localStorage.getItem('POTATO_STORE_DATA');
-      if(data) storeData = Object.assign(storeData, JSON.parse(data));
+      if(data) {
+        try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){}
+      }
       if(!storeData.topupHistory) storeData.topupHistory = [];
       if(!storeData.orderHistory) storeData.orderHistory = [];
       if(!storeData.faq) storeData.faq = [];
@@ -331,6 +322,7 @@
 
     function saveData() {
       localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
+      localStorage.setItem('LUVBEAM_STORE_DATA', JSON.stringify(storeData));
     }
 
     function showPopup(title, msg) {
@@ -384,10 +376,8 @@
       renderOrderHistory();
     }
 
-    // ฟังก์ชันแปลงข้อความในกล่องสต็อก ให้แบ่งเป็นชุดๆ ด้วยการเว้นบรรทัดว่าง (Double Enter / \n\n)
     function parseStockByDoubleNewline(text) {
       if(!text) return [];
-      // แยกด้วยการเว้นบรรทัดว่าง (บล็อกข้อมูลที่คั่นด้วยบรรทัดว่าง)
       return text.split(/\n\s*\n/).map(s => s.trim()).filter(s => s !== '');
     }
 
@@ -469,7 +459,6 @@
       let p = storeData.products.find(item => item.id === id);
       if(p) {
         document.getElementById('stockModalTitle').innerText = "จัดการสต็อก: " + p.name;
-        // นำสต็อกแต่ละชิ้นมาต่อกันด้วยการเว้น 2 บรรทัด (Enter 2 ครั้ง) เพื่อแสดงผลใน Textarea แบบชุดข้อมูล
         document.getElementById('modalStockTextarea').value = p.stockList ? p.stockList.join('\n\n') : '';
         updateStockCountPreview('modalStockTextarea', 'modalStockCountBadge');
         document.getElementById('stockModal').classList.add('open');
@@ -676,7 +665,7 @@
 
     function saveBankSettings() {
       let bankName = document.getElementById('bankNameInput').value;
-      let accName = document.getElementById('bankAccNameInput'.value);
+      let accName = document.getElementById('bankAccNameInput').value;
       let bankAcc = document.getElementById('bankAccNoInput').value;
       let qrUrl = document.getElementById('bankQrInput').value;
       localStorage.setItem('POTATO_ADMIN_SETTINGS', JSON.stringify({ bankName, accName, bankAcc, qrUrl }));
