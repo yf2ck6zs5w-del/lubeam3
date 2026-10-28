@@ -91,7 +91,7 @@
       </div>
     </header>
 
-    <!-- ==================== TAB 1: หน้าแรก ==================== -->
+    <!-- TAB 1: หน้าแรก -->
     <div id="tab-home" class="view-section active">
       <div class="credit-box">
         <div>
@@ -159,25 +159,25 @@
       </section>
     </div>
 
-    <!-- ==================== TAB 2: สินค้าทั้งหมด ==================== -->
+    <!-- TAB 2: สินค้าทั้งหมด -->
     <div id="tab-products" class="view-section" style="padding: 16px 0;">
       <div style="padding: 0 16px; margin-bottom: 12px; font-weight: 600; font-size: 1rem;"><i class="fa-solid fa-box"></i> สินค้าทั้งหมด</div>
       <div class="products-grid" id="allProductsGridContainer"></div>
     </div>
 
-    <!-- ==================== TAB 3: ค้นหา ==================== -->
+    <!-- TAB 3: ค้นหา -->
     <div id="tab-search" class="view-section" style="padding: 16px 0;">
       <div style="padding: 0 16px; margin-bottom: 12px; font-weight: 600; font-size: 1rem;"><i class="fa-solid fa-magnifying-glass"></i> ผลการค้นหา</div>
       <div class="products-grid" id="searchResultGrid"></div>
     </div>
 
-    <!-- ==================== TAB 4: ตะกร้า ==================== -->
+    <!-- TAB 4: ตะกร้า -->
     <div id="tab-cart" class="view-section" style="padding: 16px;">
       <div style="font-weight: 700; font-size: 1rem; margin-bottom: 12px;"><i class="fa-solid fa-basket-shopping"></i> ตะกร้าสินค้า</div>
       <div id="cartListContainer"></div>
     </div>
 
-    <!-- ==================== TAB 5: บัญชีผู้ใช้ ==================== -->
+    <!-- TAB 5: บัญชีผู้ใช้ -->
     <div id="tab-account" class="view-section" style="padding: 16px;">
       <div id="loggedOutAccountView">
         <div class="card" style="padding:20px; text-align:center; background:#fff; border:1px solid var(--border-color); border-radius:var(--radius-lg);">
@@ -232,7 +232,7 @@
         </div>
 
         <div id="adminMenuBtnContainer" style="display:none; margin-bottom: 14px;">
-          <button class="btn-action" style="background:#b45309;" onclick="openAdminPanel()">🛡️ จัดการหลังร้าน (Admin Panel)</button>
+          <button class="btn-action" style="background:#b45309;" onclick="window.location.href='admin.html'">🛡️ ไปที่ระบบหลังร้าน (Admin Panel)</button>
         </div>
 
         <div style="text-align: center; margin-top: 10px; margin-bottom: 20px;">
@@ -241,30 +241,7 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 6: หลังร้าน (Admin Panel ในตัว) ==================== -->
-    <div id="tab-admin" class="view-section" style="padding: 16px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 style="font-size: 1.1rem; color:var(--btn-brown);">🛡️ ระบบหลังร้าน (Admin)</h3>
-        <button onclick="switchTab('home')" style="background:var(--btn-brown); color:#fff; border:none; padding:6px 12px; border-radius:12px; font-size:0.75rem; cursor:pointer;">← กลับหน้าร้าน</button>
-      </div>
-
-      <div style="background:#fff; border:1px solid var(--border-color); border-radius:var(--radius-md); padding:14px; margin-bottom:16px;">
-        <h4 style="font-size:0.9rem; margin-bottom:10px;" id="adminFormTitle">➕ เพิ่มสินค้าใหม่</h4>
-        <input type="hidden" id="editProductId">
-        <div class="form-group"><label>ชื่อสินค้า</label><input type="text" id="adminProdName" class="form-control" placeholder="ชื่อสินค้า"></div>
-        <div class="form-group"><label>ราคา (บาท)</label><input type="number" id="adminProdPrice" class="form-control" placeholder="40"></div>
-        <div class="form-group"><label>ลิงก์รูปภาพสินค้า</label><input type="text" id="adminProdImg" class="form-control" placeholder="https://..."></div>
-        <div class="form-group"><label>รายละเอียด / กฎระเบียบก่อนซื้อ</label><textarea id="adminProdRule" class="form-control" placeholder="เช่น ห้ามเปลี่ยนรหัสผ่าน..." rows="2"></textarea></div>
-        <div class="form-group"><label>สต็อกสินค้า (ขึ้นบรรทัดใหม่ Enter ตามจำนวนชิ้น)</label><textarea id="adminProdStock" class="form-control" placeholder="account1@gmail.com | pass1&#10;account2@gmail.com | pass2" rows="4"></textarea></div>
-        <button class="btn-action" onclick="saveAdminProduct()" id="adminSaveBtn">บันทึกเพิ่มสินค้า</button>
-        <button class="form-control" onclick="resetAdminForm()" id="adminCancelBtn" style="display:none; margin-top:6px; background:#eee; border:none; cursor:pointer; font-weight:600;">ยกเลิกแก้ไข</button>
-      </div>
-
-      <div style="font-weight:700; font-size:0.95rem; margin-bottom:10px;">📦 รายการสินค้าทั้งหมดในสต็อก</div>
-      <div id="adminProductListContainer"></div>
-    </div>
-
-    <!-- ==================== MODALS ==================== -->
+    <!-- Modals -->
     <div id="productRuleModal" class="modal-overlay">
       <div class="modal-content" style="text-align: center; padding: 22px;">
         <h3 style="margin-bottom: 6px; font-size: 1rem; color:var(--text-brown);">รายละเอียดสินค้า</h3>
@@ -347,9 +324,7 @@
       currentUser: null,
       adminCredit: 100000,
       users: [],
-      products: [
-        { id: 1, name: 'ยูทูปเมลลูกค้าเคลมครบ', price: 40, image: '', rule: 'ห้ามเปลี่ยนรหัสผ่าน', stockList: ['account1@gmail.com | pass123'] }
-      ],
+      products: [],
       cart: [],
       topupHistory: [],
       orderHistory: [],
@@ -365,13 +340,14 @@
     };
 
     function loadFromStorage() {
-      let data = localStorage.getItem('LUVBEAM_STORE_DATA');
+      const data = localStorage.getItem('POTATO_STORE_DATA');
       if(data) {
         try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){}
       }
     }
 
     function saveData() {
+      localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
       localStorage.setItem('LUVBEAM_STORE_DATA', JSON.stringify(storeData));
     }
 
@@ -390,11 +366,6 @@
       document.querySelectorAll('.bottom-nav .nav-item').forEach(el => el.classList.remove('active'));
       if(document.getElementById('nav-' + tabId)) document.getElementById('nav-' + tabId).classList.add('active');
       window.scrollTo(0,0);
-    }
-
-    function openAdminPanel() {
-      switchTab('admin');
-      renderAdminProducts();
     }
 
     function renderAll() {
@@ -472,6 +443,7 @@
       container.innerHTML = items.map(p => {
         let stockCount = p.stockList ? p.stockList.length : 0;
         let isAvail = stockCount > 0;
+        let priceToDisplay = (storeData.currentUser && storeData.users && storeData.users.find(u => u.email === storeData.currentUser)?.role === 'agent' && p.agentPrice) ? p.agentPrice : p.price;
         return `
           <div class="product-card" onclick="promptAddToCart(${p.id})">
             <div class="product-img-box">
@@ -480,7 +452,7 @@
             </div>
             <div class="product-info">
               <div class="product-name">${p.name}</div>
-              <div class="product-price">฿${p.price}.-</div>
+              <div class="product-price">฿${priceToDisplay}.-</div>
               <button class="add-cart-btn ${isAvail ? '' : 'disabled'}">${isAvail ? 'ดูรายละเอียด' : 'สินค้าหมด'}</button>
             </div>
           </div>
@@ -492,8 +464,9 @@
       let p = storeData.products.find(item => item.id === id);
       if(p) {
         pendingAddToCartProductId = id;
+        let priceToDisplay = (storeData.currentUser && storeData.users && storeData.users.find(u => u.email === storeData.currentUser)?.role === 'agent' && p.agentPrice) ? p.agentPrice : p.price;
         document.getElementById('ruleModalProductName').innerText = p.name;
-        document.getElementById('ruleModalProductPrice').innerText = `ราคา: ฿${p.price}.-`;
+        document.getElementById('ruleModalProductPrice').innerText = `ราคา: ฿${priceToDisplay}.-`;
         document.getElementById('ruleModalContent').innerText = p.rule || "รายละเอียดสินค้า: ไม่มีกฎระเบียบหรือรายละเอียดพิเศษเพิ่มเติม";
         
         let imgEl = document.getElementById('ruleModalImg');
@@ -532,7 +505,9 @@
       if(!pendingAddToCartProductId) return;
       let p = storeData.products.find(item => item.id === pendingAddToCartProductId);
       if(p && p.stockList && p.stockList.length > 0) {
-        storeData.cart.push(p);
+        let actualPrice = (storeData.currentUser && storeData.users && storeData.users.find(u => u.email === storeData.currentUser)?.role === 'agent' && p.agentPrice) ? p.agentPrice : p.price;
+        let cartItem = Object.assign({}, p, { price: actualPrice });
+        storeData.cart.push(cartItem);
         saveData();
         closeRuleModal();
         showPopup("สำเร็จ", `เพิ่ม "${p.name}" ลงตะกร้าแล้ว`);
@@ -681,104 +656,6 @@
       document.getElementById('fullHistoryModal').classList.remove('open');
     }
 
-    /* ------------------ ADMIN FUNCTIONS (ในตัว) ------------------ */
-    function renderAdminProducts() {
-      const container = document.getElementById('adminProductListContainer');
-      if(!container) return;
-      if(!storeData.products || storeData.products.length === 0) {
-        container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:15px;">ยังไม่มีสินค้าในระบบ</p>`;
-        return;
-      }
-      container.innerHTML = storeData.products.map(p => `
-        <div style="background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div style="width:40px; height:40px; border-radius:8px; background:var(--card-cream); overflow:hidden; display:flex; align-items:center; justify-content:center;">
-              ${p.image ? `<img src="${p.image}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">` : '<i class="fa-solid fa-box" style="color:var(--text-muted);"></i>'}
-            </div>
-            <div>
-              <div style="font-weight:700; font-size:0.85rem;">${p.name}</div>
-              <div style="font-size:0.75rem; color:var(--text-muted);">฿${p.price} | สต็อก: ${p.stockList ? p.stockList.length : 0} ชิ้น</div>
-            </div>
-          </div>
-          <div style="display:flex; gap:6px;">
-            <button onclick="editAdminProduct(${p.id})" style="background:#fef3c7; color:#d97706; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>
-            <button onclick="deleteAdminProduct(${p.id})" style="background:#fce8e6; color:#c5221f; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function saveAdminProduct() {
-      let id = document.getElementById('editProductId').value;
-      let name = document.getElementById('adminProdName').value.trim();
-      let price = parseFloat(document.getElementById('adminProdPrice').value);
-      let image = document.getElementById('adminProdImg').value.trim();
-      let rule = document.getElementById('adminProdRule').value.trim();
-      let rawStock = document.getElementById('adminProdStock').value.trim();
-
-      if(!name || isNaN(price)) return showPopup("แจ้งเตือน", "กรุณากรอกชื่อและราคาสินค้าให้ถูกต้อง");
-
-      let stockList = rawStock ? rawStock.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [];
-
-      if(id) {
-        let p = storeData.products.find(x => x.id == id);
-        if(p) {
-          p.name = name;
-          p.price = price;
-          p.image = image;
-          p.rule = rule;
-          if(stockList.length > 0) p.stockList = stockList;
-        }
-        showPopup("สำเร็จ", "แก้ไขสินค้าเรียบร้อยแล้ว");
-      } else {
-        let newId = storeData.products.length > 0 ? Math.max(...storeData.products.map(x => x.id)) + 1 : 1;
-        storeData.products.push({ id: newId, name, price, image, rule, stockList });
-        showPopup("สำเร็จ", "เพิ่มสินค้าใหม่เรียบร้อยแล้ว");
-      }
-
-      saveData();
-      resetAdminForm();
-      renderAll();
-      renderAdminProducts();
-    }
-
-    function editAdminProduct(id) {
-      let p = storeData.products.find(x => x.id === id);
-      if(!p) return;
-      document.getElementById('editProductId').value = p.id;
-      document.getElementById('adminProdName').value = p.name;
-      document.getElementById('adminProdPrice').value = p.price;
-      document.getElementById('adminProdImg').value = p.image || '';
-      document.getElementById('adminProdRule').value = p.rule || '';
-      document.getElementById('adminProdStock').value = p.stockList ? p.stockList.join('\n') : '';
-      document.getElementById('adminFormTitle').innerText = "✏️ แก้ไขสินค้า";
-      document.getElementById('adminSaveBtn').innerText = "บันทึกการแก้ไข";
-      document.getElementById('adminCancelBtn').style.display = 'block';
-      window.scrollTo(0,0);
-    }
-
-    function resetAdminForm() {
-      document.getElementById('editProductId').value = '';
-      document.getElementById('adminProdName').value = '';
-      document.getElementById('adminProdPrice').value = '';
-      document.getElementById('adminProdImg').value = '';
-      document.getElementById('adminProdRule').value = '';
-      document.getElementById('adminProdStock').value = '';
-      document.getElementById('adminFormTitle').innerText = "➕ เพิ่มสินค้าใหม่";
-      document.getElementById('adminSaveBtn').innerText = "บันทึกเพิ่มสินค้า";
-      document.getElementById('adminCancelBtn').style.display = 'none';
-    }
-
-    function deleteAdminProduct(id) {
-      if(confirm("คุณต้องการลบสินค้านี้ใช่หรือไม่?")) {
-        storeData.products = storeData.products.filter(x => x.id !== id);
-        saveData();
-        renderAll();
-        renderAdminProducts();
-        showPopup("สำเร็จ", "ลบสินค้าเรียบร้อยแล้ว");
-      }
-    }
-
     function toggleAuthMode() {
       isRegisterView = !isRegisterView;
       document.getElementById('usernameGroup').style.display = isRegisterView ? 'block' : 'none';
@@ -800,7 +677,7 @@
       } else {
         if(isRegisterView) {
           if(!username) return showPopup("แจ้งเตือน", "กรุณากรอกชื่อผู้ใช้งาน");
-          storeData.users.push({ username, email, pass, credit: 0 });
+          storeData.users.push({ username, email, pass, credit: 0, role: 'customer' });
           storeData.currentUser = email;
           saveData();
           showPopup("สำเร็จ", "สมัครสมาชิกเรียบร้อย");
