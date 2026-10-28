@@ -25,9 +25,7 @@
     body { background-color: var(--bg-cream); color: var(--text-brown); min-height: 100vh; padding-bottom: 70px; }
     .app-container { max-width: 480px; margin: 0 auto; background: var(--bg-cream); min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(230, 92, 0, 0.08); }
     
-    /* -------------------------------------------------------------
-       ระบบซ่อนป้าย Netlify แบบเบ็ดเสร็จ
-    ------------------------------------------------------------- */
+    /* ซ่อนป้าย Netlify แบบถูกต้อง (ไม่บล็อกปุ่มกด) */
     #__netlify-badge, 
     [netlify-badge], 
     iframe[src*="netlify"], 
@@ -38,7 +36,6 @@
       display: none !important; 
       visibility: hidden !important; 
       opacity: 0 !important; 
-      pointer-events: none !important; 
       height: 0 !important; 
       width: 0 !important; 
       z-index: -9999 !important;
@@ -362,6 +359,9 @@
     function loadFromStorage() {
       const data = localStorage.getItem('LUVBEAM_STORE_DATA');
       if(data) storeData = Object.assign(storeData, JSON.parse(data));
+      // รองรับเผื่อข้อมูลเก็บในคีย์เก่า
+      const oldData = localStorage.getItem('POTATO_STORE_DATA');
+      if(!data && oldData) storeData = Object.assign(storeData, JSON.parse(oldData));
     }
 
     function saveData() {
@@ -429,9 +429,11 @@
       document.getElementById('userCreditBalance').innerText = displayCredit.toFixed(2);
       document.getElementById('profileCreditDisplay').innerText = displayCredit.toFixed(2);
 
+      // แสดงสินค้าทั้งหมดทั้งในหน้าแรกและหน้าสินค้า
       renderProducts(storeData.products, 'productGridContainer');
       renderProducts(storeData.products, 'allProductsGridContainer');
       renderCart();
+      renderFaqFrontend();
     }
 
     function renderProducts(items, containerId) {
@@ -441,24 +443,28 @@
         container.innerHTML = `<p style="grid-column: span 2; text-align:center; color:var(--text-muted); padding:20px;">ไม่พบสินค้า</p>`;
         return;
       }
-      container.innerHTML = items.map(p => `
-        <div class="product-card">
-          <div class="product-img-box">
-            <span class="stock-badge in">มีสินค้า</span>
-            ${p.image ? `<img src="${p.image}">` : '<i class="fa-solid fa-box" style="font-size:2rem; color:var(--text-muted);"></i>'}
+      container.innerHTML = items.map(p => {
+        let stockCount = p.stockList ? p.stockList.length : 0;
+        let isAvail = stockCount > 0;
+        return `
+          <div class="product-card">
+            <div class="product-img-box">
+              <span class="stock-badge ${isAvail ? 'in' : 'out'}">${isAvail ? 'มีสินค้า ('+stockCount+')' : 'สินค้าหมด'}</span>
+              ${p.image ? `<img src="${p.image}">` : '<i class="fa-solid fa-box" style="font-size:2rem; color:var(--text-muted);"></i>'}
+            </div>
+            <div class="product-info">
+              <div class="product-name">${p.name}</div>
+              <div class="product-price">฿${p.price}.-</div>
+              <button class="add-cart-btn ${isAvail ? '' : 'disabled'}" onclick="${isAvail ? `addToCart(${p.id})` : ''}">${isAvail ? '＋ เพิ่มลงตะกร้า' : 'สินค้าหมด'}</button>
+            </div>
           </div>
-          <div class="product-info">
-            <div class="product-name">${p.name}</div>
-            <div class="product-price">฿${p.price}.-</div>
-            <button class="add-cart-btn" onclick="addToCart(${p.id})">＋ เพิ่มลงตะกร้า</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function addToCart(id) {
       let p = storeData.products.find(item => item.id === id);
-      if(p) {
+      if(p && p.stockList && p.stockList.length > 0) {
         storeData.cart.push(p);
         saveData();
         document.getElementById('cartBadgeCount').innerText = storeData.cart.length;
@@ -546,6 +552,21 @@
       document.getElementById('topupAmountInput').value = '';
       renderAll();
       showPopup("เติมเงินสำเร็จ", `เติมเครดิตเข้ากระเป๋า ฿${amt.toFixed(2)} เรียบร้อยแล้ว`);
+    }
+
+    function renderFaqFrontend() {
+      const container = document.getElementById('faqFrontendContainer');
+      if(!container) return;
+      if(!storeData.faq || storeData.faq.length === 0) {
+        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">ไม่มีคำถามที่พบบ่อย</p>`;
+        return;
+      }
+      container.innerHTML = storeData.faq.map(f => `
+        <div class="card" style="padding:10px; margin-bottom:8px; background:#fff; border:1px solid var(--border-color); border-radius:var(--radius-md);">
+          <div style="font-weight:600; font-size:0.85rem; color:var(--btn-brown);">Q: ${f.q}</div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">A: ${f.a}</div>
+        </div>
+      `).join('');
     }
 
     function filterProducts() {
