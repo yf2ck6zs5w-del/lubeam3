@@ -17,6 +17,11 @@
     body { background-color: var(--bg-cream); color: var(--text-brown); min-height: 100vh; padding-bottom: 70px; }
     .app-container { max-width: 480px; margin: 0 auto; background: var(--bg-cream); min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(230, 92, 0, 0.08); }
     
+    /* ซ่อนป้าย Netlify ถาวร */
+    net-lify-badge, .netlify-badge, div[id^="netlify-badge"], iframe[src*="netlify"], div[class*="netlify"] {
+      display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; position: absolute !important; top: -9999px !important;
+    }
+
     .store-header { padding: 12px 16px 8px 16px; background: var(--card-bg); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid var(--border-color); }
     .top-brand-row { display: flex; align-items: center; justify-content: space-between; }
     .brand-logo-group { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.1rem; color: var(--text-brown); }
@@ -176,7 +181,8 @@
       </div>
       
       <div id="loggedInAccountView" style="display:none;">
-        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 14px;">โปรไฟล์ของคุณ</div>
+        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 6px;">โปรไฟล์ของคุณ</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">ยินดีต้อนรับ, <span id="profileUsernameDisplay" style="font-weight: 700; color: var(--btn-brown);"></span></div>
         
         <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 18px; margin-bottom: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -352,27 +358,17 @@
 
     function loadFromStorage() {
       const data = localStorage.getItem('POTATO_STORE_DATA');
-      if(data) {
-        try { 
-          storeData = Object.assign(storeData, JSON.parse(data)); 
-        } catch(e){}
-      }
+      if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
       if(!storeData.users) storeData.users = [];
     }
     
-    function saveData() { 
-      localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData)); 
-    }
+    function saveData() { localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData)); }
 
     function checkSessionTimeout() {
       if(storeData.currentUser && storeData.loginTime) {
         let now = new Date().getTime();
         let hoursPassed = (now - storeData.loginTime) / (1000 * 60 * 60);
-        if(hoursPassed >= 12) {
-          storeData.currentUser = null;
-          storeData.loginTime = null;
-          saveData();
-        }
+        if(hoursPassed >= 12) { storeData.currentUser = null; storeData.loginTime = null; saveData(); }
       }
     }
 
@@ -389,9 +385,7 @@
       document.querySelectorAll('.bottom-nav .nav-item').forEach(el => el.classList.remove('active'));
       if(document.getElementById('nav-' + tabId)) document.getElementById('nav-' + tabId).classList.add('active');
       window.scrollTo(0,0);
-      if(tabId === 'categories') {
-        renderCategoryTabPage();
-      }
+      if(tabId === 'categories') renderCategoryTabPage();
     }
 
     function renderAll() {
@@ -401,22 +395,27 @@
       document.getElementById('heroStoreName').innerText = storeData.storeName || 'luvbeamshop';
 
       let displayCredit = 0;
+      let displayUsername = "";
+
       if(storeData.currentUser) {
         document.getElementById('loggedInAccountView').style.display = 'block';
         document.getElementById('loggedOutAccountView').style.display = 'none';
 
         if(storeData.currentUser === ADMIN_EMAIL) {
           displayCredit = storeData.adminCredit !== undefined ? storeData.adminCredit : 100000;
+          displayUsername = "ผู้ดูแลระบบ (Admin)";
           document.getElementById('adminMenuBtnContainer').style.display = 'block';
           document.getElementById('editEmailInput').value = ADMIN_EMAIL;
         } else {
           let u = storeData.users.find(x => x.email === storeData.currentUser);
           if(u) {
             displayCredit = u.credit || 0;
+            displayUsername = u.username || u.email;
             document.getElementById('editEmailInput').value = u.email;
           }
           document.getElementById('adminMenuBtnContainer').style.display = 'none';
         }
+        document.getElementById('profileUsernameDisplay').innerText = displayUsername;
         renderUserHistorySummary();
       } else {
         document.getElementById('loggedInAccountView').style.display = 'none';
@@ -437,7 +436,6 @@
     function renderCategoryPills() {
       let container = document.getElementById('categoryPillsContainer');
       if(!container) return;
-      
       let cats = ['all'];
       if(storeData.products) {
         storeData.products.forEach(p => {
@@ -445,7 +443,6 @@
           if(!cats.includes(c)) cats.push(c);
         });
       }
-
       container.innerHTML = cats.map(c => {
         let label = c === 'all' ? 'ทั้งหมด' : c;
         let isActive = currentCategoryFilter === c ? 'active' : '';
@@ -463,7 +460,6 @@
       let list = storeData.products || [];
       let featuredIds = storeData.featuredIds || [];
       list = list.filter(p => featuredIds.includes(p.id));
-
       if(currentCategoryFilter !== 'all') {
         list = list.filter(p => (p.category || 'ทั่วไป') === currentCategoryFilter);
       }
@@ -483,7 +479,6 @@
           if(!cats.includes(c)) cats.push(c);
         });
       }
-
       container.innerHTML = cats.map(c => {
         let label = c === 'all' ? 'ทั้งหมด' : c;
         let isActive = currentCategoryPageFilter === c ? 'active' : '';
@@ -491,7 +486,6 @@
       }).join('');
 
       titleSpan.innerText = currentCategoryPageFilter === 'all' ? 'ทั้งหมด' : currentCategoryPageFilter;
-
       let list = storeData.products || [];
       if(currentCategoryPageFilter !== 'all') {
         list = list.filter(p => (p.category || 'ทั่วไป') === currentCategoryPageFilter);
@@ -614,18 +608,13 @@
     async function submitTopUpWithSlip() {
       if(!storeData.currentUser) return showPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนเติมเงิน");
       let fileInput = document.getElementById('slipFileInput');
-      if(!fileInput.files || fileInput.files.length === 0) {
-        return showPopup("แจ้งเตือน", "กรุณาอัปโหลดรูปภาพสลิปโอนเงินก่อนยืนยัน");
-      }
+      if(!fileInput.files || fileInput.files.length === 0) return showPopup("แจ้งเตือน", "กรุณาอัปโหลดรูปภาพสลิปโอนเงินก่อนยืนยัน");
 
       let apiKey = localStorage.getItem('SLIP2GO_API_KEY');
-      if(!apiKey) {
-        return showPopup("แจ้งเตือน", "ยังไม่ได้ตั้งค่า Slip2Go API Key ในหลังร้าน");
-      }
+      if(!apiKey) return showPopup("แจ้งเตือน", "ยังไม่ได้ตั้งค่า Slip2Go API Key ในหลังร้าน");
 
       let formData = new FormData();
       formData.append('file', fileInput.files[0]);
-
       showPopup("กำลังตรวจสอบ", "กำลังตรวจสอบสลิปกับระบบ Slip2Go...");
 
       try {
@@ -638,14 +627,12 @@
 
         if(result.status === 200 && result.data) {
           let transferredAmount = result.data.amount;
-
           if(storeData.currentUser === ADMIN_EMAIL) {
             storeData.adminCredit = (storeData.adminCredit || 100000) + transferredAmount;
           } else {
             let u = storeData.users.find(x => x.email === storeData.currentUser);
             if(u) u.credit = (u.credit || 0) + transferredAmount;
           }
-
           if(!storeData.topupHistory) storeData.topupHistory = [];
           storeData.topupHistory.unshift({ email: storeData.currentUser, amount: transferredAmount, time: new Date().toLocaleString() });
 
@@ -653,7 +640,7 @@
           closeTopUpModal();
           fileInput.value = '';
           renderAll();
-          showPopup("สำเร็จ 🎉", `ตรวจสอบสลิปผ่าน Slip2Go สำเร็จ เติมเครดิต ฿${transferredAmount.toFixed(2)} แล้ว`);
+          showPopup("สำเร็จ 🎉", `เติมเครดิต ฿${transferredAmount.toFixed(2)} เรียบร้อยแล้ว`);
         } else {
           showPopup("ตรวจสอบไม่ผ่าน ❌", result.message || "สลิปไม่ถูกต้องหรือไม่ผ่านการตรวจสอบ");
         }
@@ -702,15 +689,8 @@
         document.getElementById('ruleModalProductName').innerText = p.name;
         document.getElementById('ruleModalProductPrice').innerText = `ราคา: ฿${p.price}.-`;
         document.getElementById('ruleModalContent').innerText = p.rule || "ไม่มีรายละเอียดเพิ่มเติม";
-        
         let imgEl = document.getElementById('ruleModalProductImg');
-        if(p.image) {
-          imgEl.src = p.image;
-          imgEl.style.display = 'block';
-        } else {
-          imgEl.style.display = 'none';
-        }
-
+        if(p.image) { imgEl.src = p.image; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
         document.getElementById('productRuleModal').classList.add('open');
       }
     }
@@ -719,40 +699,26 @@
     function confirmBuyDirect() {
       if(!pendingBuyProductId) return;
       if(!storeData.currentUser) return showPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนซื้อสินค้า");
-      
       let p = storeData.products.find(item => item.id === pendingBuyProductId);
-      if(!p || !p.stockList || p.stockList.length === 0) {
-        return showPopup("สินค้าหมด", "สินค้านี้หมดชั่วคราว");
-      }
+      if(!p || !p.stockList || p.stockList.length === 0) return showPopup("สินค้าหมด", "สินค้านี้หมดชั่วคราว");
 
       let currentCred = storeData.currentUser === ADMIN_EMAIL ? (storeData.adminCredit || 100000) : (storeData.users.find(u => u.email === storeData.currentUser)?.credit || 0);
-      if(currentCred < p.price) {
-        return showPopup("เครดิตไม่พอ", "ยอดเครดิตของคุณไม่เพียงพอ กรุณาเติมเงินก่อนซื้อ");
-      }
+      if(currentCred < p.price) return showPopup("เครดิตไม่พอ", "ยอดเครดิตของคุณไม่เพียงพอ กรุณาเติมเงินก่อนซื้อ");
 
-      if(storeData.currentUser === ADMIN_EMAIL) {
-        storeData.adminCredit = currentCred - p.price;
-      } else {
+      if(storeData.currentUser === ADMIN_EMAIL) storeData.adminCredit = currentCred - p.price;
+      else {
         let u = storeData.users.find(x => x.email === storeData.currentUser);
         if(u) u.credit = currentCred - p.price;
       }
 
       let receivedItem = p.stockList.shift();
       lastPurchasedStockText = receivedItem;
-
       if(!storeData.orderHistory) storeData.orderHistory = [];
-      storeData.orderHistory.unshift({
-        user: storeData.currentUser,
-        itemNames: p.name,
-        total: p.price,
-        time: new Date().toLocaleString(),
-        details: receivedItem
-      });
+      storeData.orderHistory.unshift({ user: storeData.currentUser, itemNames: p.name, total: p.price, time: new Date().toLocaleString(), details: receivedItem });
 
       saveData();
       closeRuleModal();
       renderAll();
-
       document.getElementById('purchasedStockListContent').innerText = receivedItem;
       document.getElementById('purchasedStockModal').classList.add('open');
     }
@@ -807,9 +773,8 @@
 
       if(currentCred < total) return showPopup("เครดิตไม่พอ", "ยอดเครดิตของคุณไม่เพียงพอ กรุณาเติมเงิน");
 
-      if(storeData.currentUser === ADMIN_EMAIL) {
-        storeData.adminCredit = currentCred - total;
-      } else {
+      if(storeData.currentUser === ADMIN_EMAIL) storeData.adminCredit = currentCred - total;
+      else {
         let u = storeData.users.find(x => x.email === storeData.currentUser);
         if(u) u.credit = currentCred - total;
       }
@@ -824,31 +789,18 @@
 
       lastPurchasedStockText = receivedItemsText.trim();
       let itemNames = storeData.cart.map(c => c.name).join(', ');
-
       if(!storeData.orderHistory) storeData.orderHistory = [];
-      storeData.orderHistory.unshift({
-        user: storeData.currentUser,
-        itemNames,
-        total,
-        time: new Date().toLocaleString(),
-        details: lastPurchasedStockText
-      });
+      storeData.orderHistory.unshift({ user: storeData.currentUser, itemNames, total, time: new Date().toLocaleString(), details: lastPurchasedStockText });
 
       storeData.cart = [];
       saveData();
       renderAll();
-
       document.getElementById('purchasedStockListContent').innerText = lastPurchasedStockText;
       document.getElementById('purchasedStockModal').classList.add('open');
     }
 
-    function copyPurchasedStock() {
-      navigator.clipboard.writeText(lastPurchasedStockText).then(() => showPopup("สำเร็จ", "คัดลอกข้อมูลแล้ว"));
-    }
-    function closePurchasedStockModal() {
-      document.getElementById('purchasedStockModal').classList.remove('open');
-      switchTab('home');
-    }
+    function copyPurchasedStock() { navigator.clipboard.writeText(lastPurchasedStockText).then(() => showPopup("สำเร็จ", "คัดลอกข้อมูลแล้ว")); }
+    function closePurchasedStockModal() { document.getElementById('purchasedStockModal').classList.remove('open'); switchTab('home'); }
 
     function toggleAuthMode() {
       isRegisterView = !isRegisterView;
@@ -889,7 +841,6 @@
       
       if(!email || !pass) return showPopup("แจ้งเตือน", "กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน");
 
-      // กรณีที่ 1: แอดมินล็อกอิน
       if(email === ADMIN_EMAIL) {
         storeData.currentUser = ADMIN_EMAIL;
         storeData.loginTime = new Date().getTime();
@@ -901,10 +852,8 @@
 
       if(!storeData.users) storeData.users = [];
 
-      // กรณีที่ 2: สมัครสมาชิกใหม่
       if(isRegisterView) {
         if(!username) return showPopup("แจ้งเตือน", "กรุณากรอกชื่อผู้ใช้งาน");
-        
         let existing = storeData.users.find(u => u.email === email);
         if(existing) return showPopup("แจ้งเตือน", "อีเมลนี้มีในระบบแล้ว กรุณากดเข้าสู่ระบบ");
 
@@ -914,13 +863,10 @@
         saveData();
         renderAll();
         showPopup("สำเร็จ 🎉", "สมัครสมาชิกและเข้าสู่ระบบเรียบร้อยแล้ว");
-      } 
-      // กรณีที่ 3: ลูกค้าทั่วไปเข้าสู่ระบบ
-      else {
+      } else {
         let found = storeData.users.find(u => u.email === email && u.pass === pass);
-        if(!found) {
-          return showPopup("เข้าสู่ระบบไม่สำเร็จ ❌", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-        }
+        if(!found) return showPopup("เข้าสู่ระบบไม่สำเร็จ ❌", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+        
         storeData.currentUser = found.email;
         storeData.loginTime = new Date().getTime();
         saveData();
