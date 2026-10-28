@@ -358,7 +358,7 @@
     }
 
     function renderAllAdmin() {
-      loadData(); // โหลดข้อมูลล่าสุดจาก localStorage ทุกครั้งที่เรนเดอร์
+      loadData();
 
       document.getElementById('headerStoreTitle').innerText = storeData.storeName || 'luvbeamshop';
       document.getElementById('settingStoreName').value = storeData.storeName || '';
@@ -369,7 +369,6 @@
       let totalStock = 0;
       if(storeData.products) { storeData.products.forEach(p => { if(p.stockList) totalStock += p.stockList.length; }); }
       
-      // นับรวมแอดมินเข้าไปในจำนวนสมาชิกทั้งหมดด้วย
       let totalUsers = (storeData.users ? storeData.users.length : 0) + 1; 
       let totalTx = (storeData.topupHistory ? storeData.topupHistory.length : 0) + totalOrders;
 
@@ -594,7 +593,6 @@
     function renderUsers() {
       const container = document.getElementById('adminUserListContainer');
       
-      // สร้างรายการที่จะแสดง โดยนำแอดมิน (Admin) มาต่อรวมกับรายชื่อลูกค้าทั้งหมด
       let adminObj = { username: "ผู้ดูแลระบบ (Admin)", email: ADMIN_EMAIL, role: "admin", credit: storeData.adminCredit || 100000 };
       let allUsersList = [adminObj, ...(storeData.users || [])];
 
@@ -605,7 +603,6 @@
 
       container.innerHTML = allUsersList.map((u, idx) => {
         let isAdmin = (u.email === ADMIN_EMAIL);
-        // ถ้าเป็นแอดมิน idx จริงใน users จะไม่มี ให้กำหนดช่องแก้ไขพิเศษ
         let realUserIdx = idx - 1; 
 
         return `
