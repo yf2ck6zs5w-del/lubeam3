@@ -57,7 +57,7 @@
     .add-cart-btn { background: var(--card-cream); border: 1px solid var(--border-color); color: var(--text-brown); width: 100%; border-radius: 8px; height: 28px; font-size: 0.75rem; cursor: pointer; font-weight: 600; margin-top: 4px; }
     .add-cart-btn.disabled { opacity: 0.4; cursor: not-allowed; background: #eee; }
 
-    .bottom-nav { position: fixed !important; bottom: 0 !important; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex !important; justify-around: space-around !important; padding: 8px 0 10px 0; z-index: 9999 !important; }
+    .bottom-nav { position: fixed !important; bottom: 0 !important; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex !important; justify-content: space-around !important; padding: 8px 0 10px 0; z-index: 9999 !important; }
     .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 0.75rem; gap: 2px; cursor: pointer; text-decoration: none; position: relative; }
     .nav-item i { display: block; font-size: 1.2rem; margin-bottom: 2px; }
     .nav-item.active { color: var(--primary-color); font-weight: 600; }
@@ -91,7 +91,7 @@
       </div>
     </header>
 
-    <!-- TAB 1: หน้าแรก -->
+    <!-- ==================== TAB 1: หน้าแรก ==================== -->
     <div id="tab-home" class="view-section active">
       <div class="credit-box">
         <div>
@@ -159,25 +159,25 @@
       </section>
     </div>
 
-    <!-- TAB 2: สินค้าทั้งหมด -->
+    <!-- ==================== TAB 2: สินค้าทั้งหมด ==================== -->
     <div id="tab-products" class="view-section" style="padding: 16px 0;">
       <div style="padding: 0 16px; margin-bottom: 12px; font-weight: 600; font-size: 1rem;"><i class="fa-solid fa-box"></i> สินค้าทั้งหมด</div>
       <div class="products-grid" id="allProductsGridContainer"></div>
     </div>
 
-    <!-- TAB 3: ค้นหา -->
+    <!-- ==================== TAB 3: ค้นหา ==================== -->
     <div id="tab-search" class="view-section" style="padding: 16px 0;">
       <div style="padding: 0 16px; margin-bottom: 12px; font-weight: 600; font-size: 1rem;"><i class="fa-solid fa-magnifying-glass"></i> ผลการค้นหา</div>
       <div class="products-grid" id="searchResultGrid"></div>
     </div>
 
-    <!-- TAB 4: ตะกร้า -->
+    <!-- ==================== TAB 4: ตะกร้า ==================== -->
     <div id="tab-cart" class="view-section" style="padding: 16px;">
       <div style="font-weight: 700; font-size: 1rem; margin-bottom: 12px;"><i class="fa-solid fa-basket-shopping"></i> ตะกร้าสินค้า</div>
       <div id="cartListContainer"></div>
     </div>
 
-    <!-- TAB 5: บัญชีผู้ใช้ -->
+    <!-- ==================== TAB 5: บัญชีผู้ใช้ ==================== -->
     <div id="tab-account" class="view-section" style="padding: 16px;">
       <div id="loggedOutAccountView">
         <div class="card" style="padding:20px; text-align:center; background:#fff; border:1px solid var(--border-color); border-radius:var(--radius-lg);">
@@ -232,7 +232,7 @@
         </div>
 
         <div id="adminMenuBtnContainer" style="display:none; margin-bottom: 14px;">
-          <button class="btn-action" style="background:#b45309;" onclick="window.location.href='admin.html'">🛡️ จัดการหลังร้าน (Admin Panel)</button>
+          <button class="btn-action" style="background:#b45309;" onclick="openAdminPanel()">🛡️ จัดการหลังร้าน (Admin Panel)</button>
         </div>
 
         <div style="text-align: center; margin-top: 10px; margin-bottom: 20px;">
@@ -241,7 +241,30 @@
       </div>
     </div>
 
-    <!-- Modal รายละเอียดสินค้าก่อนลงตะกร้า -->
+    <!-- ==================== TAB 6: หลังร้าน (Admin Panel ในตัว) ==================== -->
+    <div id="tab-admin" class="view-section" style="padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="font-size: 1.1rem; color:var(--btn-brown);">🛡️ ระบบหลังร้าน (Admin)</h3>
+        <button onclick="switchTab('home')" style="background:var(--btn-brown); color:#fff; border:none; padding:6px 12px; border-radius:12px; font-size:0.75rem; cursor:pointer;">← กลับหน้าร้าน</button>
+      </div>
+
+      <div style="background:#fff; border:1px solid var(--border-color); border-radius:var(--radius-md); padding:14px; margin-bottom:16px;">
+        <h4 style="font-size:0.9rem; margin-bottom:10px;" id="adminFormTitle">➕ เพิ่มสินค้าใหม่</h4>
+        <input type="hidden" id="editProductId">
+        <div class="form-group"><label>ชื่อสินค้า</label><input type="text" id="adminProdName" class="form-control" placeholder="ชื่อสินค้า"></div>
+        <div class="form-group"><label>ราคา (บาท)</label><input type="number" id="adminProdPrice" class="form-control" placeholder="40"></div>
+        <div class="form-group"><label>ลิงก์รูปภาพสินค้า</label><input type="text" id="adminProdImg" class="form-control" placeholder="https://..."></div>
+        <div class="form-group"><label>รายละเอียด / กฎระเบียบก่อนซื้อ</label><textarea id="adminProdRule" class="form-control" placeholder="เช่น ห้ามเปลี่ยนรหัสผ่าน..." rows="2"></textarea></div>
+        <div class="form-group"><label>สต็อกสินค้า (ขึ้นบรรทัดใหม่ Enter ตามจำนวนชิ้น)</label><textarea id="adminProdStock" class="form-control" placeholder="account1@gmail.com | pass1&#10;account2@gmail.com | pass2" rows="4"></textarea></div>
+        <button class="btn-action" onclick="saveAdminProduct()" id="adminSaveBtn">บันทึกเพิ่มสินค้า</button>
+        <button class="form-control" onclick="resetAdminForm()" id="adminCancelBtn" style="display:none; margin-top:6px; background:#eee; border:none; cursor:pointer; font-weight:600;">ยกเลิกแก้ไข</button>
+      </div>
+
+      <div style="font-weight:700; font-size:0.95rem; margin-bottom:10px;">📦 รายการสินค้าทั้งหมดในสต็อก</div>
+      <div id="adminProductListContainer"></div>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
     <div id="productRuleModal" class="modal-overlay">
       <div class="modal-content" style="text-align: center; padding: 22px;">
         <h3 style="margin-bottom: 6px; font-size: 1rem; color:var(--text-brown);">รายละเอียดสินค้า</h3>
@@ -257,20 +280,16 @@
       </div>
     </div>
 
-    <!-- Modal แสดงสินค้าในสต็อกหลังซื้อพร้อมปุ่มคัดลอก -->
     <div id="purchasedStockModal" class="modal-overlay">
       <div class="modal-content" style="text-align: center; padding: 22px;">
         <h3 style="margin-bottom: 6px; font-size: 1.1rem; color:var(--btn-brown);">🎉 สั่งซื้อสำเร็จและได้รับสินค้าแล้ว</h3>
         <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">ข้อมูลสินค้าที่คุณได้รับ (จัดเรียงตามสต็อกเป๊ะๆ):</p>
-        
         <div id="purchasedStockListContent" style="font-size: 0.8rem; background: var(--card-cream); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 14px; max-height: 200px; overflow-y: auto; text-align: left; font-family: monospace; white-space: pre-wrap; word-break: break-all; color: #3d261c; line-height: 1.6;"></div>
-        
         <button class="btn-action" onclick="copyPurchasedStock()" style="margin-bottom: 6px; background: #27ae60;"><i class="fa-regular fa-copy"></i> คัดลอกข้อมูลสินค้าทั้งหมด</button>
         <button class="form-control" onclick="closePurchasedStockModal()" style="background: #eee; color:var(--text-brown); border: none; cursor: pointer; font-weight: 600; border-radius: 20px; padding: 8px;">ปิดหน้าต่าง</button>
       </div>
     </div>
 
-    <!-- Modal ดูประวัติ -->
     <div id="fullHistoryModal" class="modal-overlay">
       <div class="modal-content" style="text-align: left; max-width: 400px; padding: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -282,7 +301,6 @@
       </div>
     </div>
 
-    <!-- Modal เติมเงิน -->
     <div id="topupModal" class="modal-overlay" style="align-items: flex-end; padding: 0;">
       <div style="background: var(--bg-cream); width: 100%; max-width: 480px; height: 90vh; border-radius: 24px 24px 0 0; padding: 16px; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -302,7 +320,6 @@
       </div>
     </div>
 
-    <!-- Popup Alert -->
     <div id="cutePopupModal" class="modal-overlay">
       <div class="modal-content">
         <h3 id="popupTitle" style="margin-bottom: 6px; font-size: 1rem;">แจ้งเตือน</h3>
@@ -330,7 +347,9 @@
       currentUser: null,
       adminCredit: 100000,
       users: [],
-      products: [],
+      products: [
+        { id: 1, name: 'ยูทูปเมลลูกค้าเคลมครบ', price: 40, image: '', rule: 'ห้ามเปลี่ยนรหัสผ่าน', stockList: ['account1@gmail.com | pass123'] }
+      ],
       cart: [],
       topupHistory: [],
       orderHistory: [],
@@ -346,30 +365,14 @@
     };
 
     function loadFromStorage() {
-      // ดึงข้อมูลตรงกับทุกคีย์ที่เป็นไปได้จากระบบหลังร้าน
-      let keys = ['LUVBEAM_STORE_DATA', 'POTATO_STORE_DATA', 'STORE_DATA', 'beam_shop_data'];
-      let foundData = null;
-
-      for (let k of keys) {
-        let d = localStorage.getItem(k);
-        if (d) {
-          try {
-            foundData = JSON.parse(d);
-            break;
-          } catch(e) {}
-        }
-      }
-
-      if (foundData) {
-        storeData = Object.assign(storeData, foundData);
+      let data = localStorage.getItem('LUVBEAM_STORE_DATA');
+      if(data) {
+        try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){}
       }
     }
 
     function saveData() {
-      let dataStr = JSON.stringify(storeData);
-      localStorage.setItem('LUVBEAM_STORE_DATA', dataStr);
-      localStorage.setItem('POTATO_STORE_DATA', dataStr);
-      localStorage.setItem('STORE_DATA', dataStr);
+      localStorage.setItem('LUVBEAM_STORE_DATA', JSON.stringify(storeData));
     }
 
     function showPopup(title, msg) {
@@ -386,6 +389,12 @@
       document.getElementById('tab-' + tabId).classList.add('active');
       document.querySelectorAll('.bottom-nav .nav-item').forEach(el => el.classList.remove('active'));
       if(document.getElementById('nav-' + tabId)) document.getElementById('nav-' + tabId).classList.add('active');
+      window.scrollTo(0,0);
+    }
+
+    function openAdminPanel() {
+      switchTab('admin');
+      renderAdminProducts();
     }
 
     function renderAll() {
@@ -396,10 +405,7 @@
       let totalOrders = storeData.orderHistory ? storeData.orderHistory.length : 0;
       let totalStock = 0;
       if(storeData.products) {
-        storeData.products.forEach(p => { 
-          let count = p.stockList ? p.stockList.length : (p.stocks ? p.stocks.length : (p.stock || 0));
-          totalStock += count;
-        });
+        storeData.products.forEach(p => { if(p.stockList) totalStock += p.stockList.length; });
       }
       let totalUsers = storeData.users ? storeData.users.length : 0;
       let totalTx = (storeData.topupHistory ? storeData.topupHistory.length : 0) + totalOrders;
@@ -464,19 +470,16 @@
         return;
       }
       container.innerHTML = items.map(p => {
-        let stockList = p.stockList || p.stocks || [];
-        let stockCount = Array.isArray(stockList) ? stockList.length : (p.stock || 0);
+        let stockCount = p.stockList ? p.stockList.length : 0;
         let isAvail = stockCount > 0;
-        let imgSrc = p.image || p.img || '';
-
         return `
-          <div class="product-card" onclick="promptAddToCart('${p.id}')">
+          <div class="product-card" onclick="promptAddToCart(${p.id})">
             <div class="product-img-box">
               <span class="stock-badge ${isAvail ? 'in' : 'out'}">${isAvail ? 'มีสินค้า ('+stockCount+')' : 'สินค้าหมด'}</span>
-              ${imgSrc ? `<img src="${imgSrc}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=No+Image';">` : '<i class="fa-solid fa-box" style="font-size:2rem; color:var(--text-muted);"></i>'}
+              ${p.image ? `<img src="${p.image}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=No+Image';">` : '<i class="fa-solid fa-box" style="font-size:2rem; color:var(--text-muted);"></i>'}
             </div>
             <div class="product-info">
-              <div class="product-name">${p.name || p.title}</div>
+              <div class="product-name">${p.name}</div>
               <div class="product-price">฿${p.price}.-</div>
               <button class="add-cart-btn ${isAvail ? '' : 'disabled'}">${isAvail ? 'ดูรายละเอียด' : 'สินค้าหมด'}</button>
             </div>
@@ -486,19 +489,17 @@
     }
 
     function promptAddToCart(id) {
-      let p = storeData.products.find(item => String(item.id) === String(id));
+      let p = storeData.products.find(item => item.id === id);
       if(p) {
         pendingAddToCartProductId = id;
-        document.getElementById('ruleModalProductName').innerText = p.name || p.title;
+        document.getElementById('ruleModalProductName').innerText = p.name;
         document.getElementById('ruleModalProductPrice').innerText = `ราคา: ฿${p.price}.-`;
-        document.getElementById('ruleModalContent').innerText = p.rule || p.details || p.description || "รายละเอียดสินค้า: ไม่มีกฎระเบียบหรือรายละเอียดพิเศษเพิ่มเติม โปรดตรวจสอบความถูกต้องก่อนสั่งซื้อ";
+        document.getElementById('ruleModalContent').innerText = p.rule || "รายละเอียดสินค้า: ไม่มีกฎระเบียบหรือรายละเอียดพิเศษเพิ่มเติม";
         
         let imgEl = document.getElementById('ruleModalImg');
         let iconEl = document.getElementById('ruleModalDefaultIcon');
-        let imgSrc = p.image || p.img || '';
-        
-        if(imgSrc) {
-          imgEl.src = imgSrc;
+        if(p.image) {
+          imgEl.src = p.image;
           imgEl.style.display = 'block';
           iconEl.style.display = 'none';
         } else {
@@ -506,8 +507,7 @@
           iconEl.style.display = 'block';
         }
 
-        let stockList = p.stockList || p.stocks || [];
-        let stockCount = Array.isArray(stockList) ? stockList.length : (p.stock || 0);
+        let stockCount = p.stockList ? p.stockList.length : 0;
         let confirmBtn = document.getElementById('confirmAddBtn');
         if(stockCount <= 0) {
           confirmBtn.innerText = 'สินค้าหมด';
@@ -530,17 +530,13 @@
 
     function confirmAddToCart() {
       if(!pendingAddToCartProductId) return;
-      let p = storeData.products.find(item => String(item.id) === String(pendingAddToCartProductId));
-      if(p) {
-        let stockList = p.stockList || p.stocks || [];
-        let stockCount = Array.isArray(stockList) ? stockList.length : (p.stock || 0);
-        if(stockCount > 0) {
-          storeData.cart.push(p);
-          saveData();
-          closeRuleModal();
-          showPopup("สำเร็จ", `เพิ่ม "${p.name || p.title}" ลงตะกร้าแล้ว`);
-          renderAll();
-        }
+      let p = storeData.products.find(item => item.id === pendingAddToCartProductId);
+      if(p && p.stockList && p.stockList.length > 0) {
+        storeData.cart.push(p);
+        saveData();
+        closeRuleModal();
+        showPopup("สำเร็จ", `เพิ่ม "${p.name}" ลงตะกร้าแล้ว`);
+        renderAll();
       }
     }
 
@@ -554,16 +550,15 @@
       }
       let total = 0;
       container.innerHTML = storeData.cart.map((c, idx) => {
-        total += parseFloat(c.price || 0);
-        let imgSrc = c.image || c.img || '';
+        total += c.price;
         return `
           <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; margin-bottom:8px; background:#fff; border:1px solid var(--border-color); border-radius:var(--radius-md);">
             <div style="display:flex; align-items:center; gap:10px;">
               <div style="width:40px; height:40px; border-radius:8px; background:var(--card-cream); overflow:hidden; display:flex; align-items:center; justify-content:center;">
-                ${imgSrc ? `<img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">` : '<i class="fa-solid fa-box" style="color:var(--text-muted);"></i>'}
+                ${c.image ? `<img src="${c.image}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">` : '<i class="fa-solid fa-box" style="color:var(--text-muted);"></i>'}
               </div>
               <div>
-                <div style="font-weight:600; font-size:0.85rem;">${c.name || c.title}</div>
+                <div style="font-weight:600; font-size:0.85rem;">${c.name}</div>
                 <div style="font-size:0.8rem; color:var(--btn-brown);">฿${c.price}.-</div>
               </div>
             </div>
@@ -581,8 +576,8 @@
 
     function checkout() {
       if(!storeData.currentUser) return showPopup("แจ้งเตือน", "กรุณาเข้าสู่ระบบก่อนชำระเงิน");
-      let total = storeData.cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
-      let currentCred = storeData.currentUser === ADMIN_EMAIL ? (storeData.adminCredit !== undefined ? storeData.adminCredit : 100000) : (storeData.users.find(u => u.email === storeData.currentUser)?.credit || 0);
+      let total = storeData.cart.reduce((sum, item) => sum + item.price, 0);
+      let currentCred = storeData.currentUser === ADMIN_EMAIL ? (storeData.adminCredit || 100000) : (storeData.users.find(u => u.email === storeData.currentUser)?.credit || 0);
 
       if(currentCred < total) return showPopup("เครดิตไม่พอ", "ยอดเครดิตของคุณไม่เพียงพอ กรุณาเติมเครดิตก่อนทำรายการ");
 
@@ -595,23 +590,17 @@
 
       let receivedItemsText = "";
       storeData.cart.forEach(c => {
-        let prod = storeData.products.find(p => String(p.id) === String(c.id));
-        if(prod) {
-          let stockList = prod.stockList || prod.stocks;
-          if(Array.isArray(stockList) && stockList.length > 0) {
-            let stockItem = stockList.shift();
-            receivedItemsText += `${stockItem}\n`;
-          } else if(prod.stock > 0) {
-            prod.stock -= 1;
-            receivedItemsText += `(${prod.name || prod.title}: ชำระเงินเรียบร้อยแล้ว)\n`;
-          } else {
-            receivedItemsText += `(${c.name || c.title}: สินค้าหมดสต็อก)\n`;
-          }
+        let prod = storeData.products.find(p => p.id === c.id);
+        if(prod && prod.stockList && prod.stockList.length > 0) {
+          let stockItem = prod.stockList.shift();
+          receivedItemsText += `${stockItem}\n`;
+        } else {
+          receivedItemsText += `(${c.name}: สินค้าหมดสต็อก)\n`;
         }
       });
 
       lastPurchasedStockText = receivedItemsText.trim();
-      let itemNames = storeData.cart.map(c => c.name || c.title).join(', ');
+      let itemNames = storeData.cart.map(c => c.name).join(', ');
 
       if(!storeData.orderHistory) storeData.orderHistory = [];
       storeData.orderHistory.unshift({
@@ -692,6 +681,104 @@
       document.getElementById('fullHistoryModal').classList.remove('open');
     }
 
+    /* ------------------ ADMIN FUNCTIONS (ในตัว) ------------------ */
+    function renderAdminProducts() {
+      const container = document.getElementById('adminProductListContainer');
+      if(!container) return;
+      if(!storeData.products || storeData.products.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:15px;">ยังไม่มีสินค้าในระบบ</p>`;
+        return;
+      }
+      container.innerHTML = storeData.products.map(p => `
+        <div style="background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:40px; height:40px; border-radius:8px; background:var(--card-cream); overflow:hidden; display:flex; align-items:center; justify-content:center;">
+              ${p.image ? `<img src="${p.image}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">` : '<i class="fa-solid fa-box" style="color:var(--text-muted);"></i>'}
+            </div>
+            <div>
+              <div style="font-weight:700; font-size:0.85rem;">${p.name}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">฿${p.price} | สต็อก: ${p.stockList ? p.stockList.length : 0} ชิ้น</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button onclick="editAdminProduct(${p.id})" style="background:#fef3c7; color:#d97706; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="deleteAdminProduct(${p.id})" style="background:#fce8e6; color:#c5221f; border:none; padding:6px 10px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function saveAdminProduct() {
+      let id = document.getElementById('editProductId').value;
+      let name = document.getElementById('adminProdName').value.trim();
+      let price = parseFloat(document.getElementById('adminProdPrice').value);
+      let image = document.getElementById('adminProdImg').value.trim();
+      let rule = document.getElementById('adminProdRule').value.trim();
+      let rawStock = document.getElementById('adminProdStock').value.trim();
+
+      if(!name || isNaN(price)) return showPopup("แจ้งเตือน", "กรุณากรอกชื่อและราคาสินค้าให้ถูกต้อง");
+
+      let stockList = rawStock ? rawStock.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [];
+
+      if(id) {
+        let p = storeData.products.find(x => x.id == id);
+        if(p) {
+          p.name = name;
+          p.price = price;
+          p.image = image;
+          p.rule = rule;
+          if(stockList.length > 0) p.stockList = stockList;
+        }
+        showPopup("สำเร็จ", "แก้ไขสินค้าเรียบร้อยแล้ว");
+      } else {
+        let newId = storeData.products.length > 0 ? Math.max(...storeData.products.map(x => x.id)) + 1 : 1;
+        storeData.products.push({ id: newId, name, price, image, rule, stockList });
+        showPopup("สำเร็จ", "เพิ่มสินค้าใหม่เรียบร้อยแล้ว");
+      }
+
+      saveData();
+      resetAdminForm();
+      renderAll();
+      renderAdminProducts();
+    }
+
+    function editAdminProduct(id) {
+      let p = storeData.products.find(x => x.id === id);
+      if(!p) return;
+      document.getElementById('editProductId').value = p.id;
+      document.getElementById('adminProdName').value = p.name;
+      document.getElementById('adminProdPrice').value = p.price;
+      document.getElementById('adminProdImg').value = p.image || '';
+      document.getElementById('adminProdRule').value = p.rule || '';
+      document.getElementById('adminProdStock').value = p.stockList ? p.stockList.join('\n') : '';
+      document.getElementById('adminFormTitle').innerText = "✏️ แก้ไขสินค้า";
+      document.getElementById('adminSaveBtn').innerText = "บันทึกการแก้ไข";
+      document.getElementById('adminCancelBtn').style.display = 'block';
+      window.scrollTo(0,0);
+    }
+
+    function resetAdminForm() {
+      document.getElementById('editProductId').value = '';
+      document.getElementById('adminProdName').value = '';
+      document.getElementById('adminProdPrice').value = '';
+      document.getElementById('adminProdImg').value = '';
+      document.getElementById('adminProdRule').value = '';
+      document.getElementById('adminProdStock').value = '';
+      document.getElementById('adminFormTitle').innerText = "➕ เพิ่มสินค้าใหม่";
+      document.getElementById('adminSaveBtn').innerText = "บันทึกเพิ่มสินค้า";
+      document.getElementById('adminCancelBtn').style.display = 'none';
+    }
+
+    function deleteAdminProduct(id) {
+      if(confirm("คุณต้องการลบสินค้านี้ใช่หรือไม่?")) {
+        storeData.products = storeData.products.filter(x => x.id !== id);
+        saveData();
+        renderAll();
+        renderAdminProducts();
+        showPopup("สำเร็จ", "ลบสินค้าเรียบร้อยแล้ว");
+      }
+    }
+
     function toggleAuthMode() {
       isRegisterView = !isRegisterView;
       document.getElementById('usernameGroup').style.display = isRegisterView ? 'block' : 'none';
@@ -741,7 +828,7 @@
       if(isNaN(amt) || amt <= 0) return showPopup("แจ้งเตือน", "กรุณากรอกจำนวนเงินให้ถูกต้อง");
 
       if(storeData.currentUser === ADMIN_EMAIL) {
-        storeData.adminCredit = (storeData.adminCredit !== undefined ? storeData.adminCredit : 100000) + amt;
+        storeData.adminCredit = (storeData.adminCredit || 100000) + amt;
       } else {
         let u = storeData.users.find(x => x.email === storeData.currentUser);
         if(u) u.credit = (u.credit || 0) + amt;
@@ -789,7 +876,7 @@
       let kw = document.getElementById('searchInput').value.toLowerCase();
       if(kw) {
         switchTab('search');
-        let filtered = storeData.products.filter(p => (p.name || p.title || '').toLowerCase().includes(kw));
+        let filtered = storeData.products.filter(p => p.name.toLowerCase().includes(kw));
         renderProducts(filtered, 'searchResultGrid');
       } else {
         switchTab('home');
