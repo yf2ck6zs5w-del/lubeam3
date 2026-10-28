@@ -15,7 +15,6 @@
     body { background: var(--bg-cream); color: var(--text-brown); min-height: 100vh; }
     .admin-container { max-width: 480px; margin: 0 auto; background: var(--bg-cream); min-height: 100vh; position: relative; padding-bottom: 50px; }
     
-    /* ซ่อนป้าย Netlify ถาวร */
     net-lify-badge, .netlify-badge, div[id^="netlify-badge"], iframe[src*="netlify"], div[class*="netlify"] {
       display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; position: absolute !important; top: -9999px !important;
     }
@@ -256,7 +255,7 @@
       <!-- TAB 11: USERS -->
       <div id="tab-users" class="panel-view">
         <div class="card">
-          <div style="font-weight: 700; margin-bottom: 10px;">👥 จัดการรายชื่อสมาชิก (ลูกค้า / ตัวแทน / เครดิต)</div>
+          <div style="font-weight: 700; margin-bottom: 10px;">👥 จัดการรายชื่อสมาชิก (รวมแอดมินและลูกค้า)</div>
           <div id="adminUserListContainer"></div>
         </div>
       </div>
@@ -320,6 +319,7 @@
   </div>
 
   <script>
+    const ADMIN_EMAIL = "tongty212@gmail.com";
     let storeData = { storeName: 'luvbeamshop', logoUrl: '', themeColor: '#8c5a3c', products: [], featuredIds: [], users: [], banners: [], faq: [], topupHistory: [], orderHistory: [] };
     let editingStockProductId = null;
 
@@ -358,6 +358,8 @@
     }
 
     function renderAllAdmin() {
+      loadData(); // โหลดข้อมูลล่าสุดจาก localStorage ทุกครั้งที่เรนเดอร์
+
       document.getElementById('headerStoreTitle').innerText = storeData.storeName || 'luvbeamshop';
       document.getElementById('settingStoreName').value = storeData.storeName || '';
       document.getElementById('settingLogoUrl').value = storeData.logoUrl || '';
@@ -366,7 +368,9 @@
       let totalOrders = storeData.orderHistory ? storeData.orderHistory.length : 0;
       let totalStock = 0;
       if(storeData.products) { storeData.products.forEach(p => { if(p.stockList) totalStock += p.stockList.length; }); }
-      let totalUsers = storeData.users ? storeData.users.length : 0;
+      
+      // นับรวมแอดมินเข้าไปในจำนวนสมาชิกทั้งหมดด้วย
+      let totalUsers = (storeData.users ? storeData.users.length : 0) + 1; 
       let totalTx = (storeData.topupHistory ? storeData.topupHistory.length : 0) + totalOrders;
 
       document.getElementById('statOrders').innerText = totalOrders;
@@ -589,31 +593,55 @@
 
     function renderUsers() {
       const container = document.getElementById('adminUserListContainer');
-      if(!storeData.users || storeData.users.length === 0) {
+      
+      // สร้างรายการที่จะแสดง โดยนำแอดมิน (Admin) มาต่อรวมกับรายชื่อลูกค้าทั้งหมด
+      let adminObj = { username: "ผู้ดูแลระบบ (Admin)", email: ADMIN_EMAIL, role: "admin", credit: storeData.adminCredit || 100000 };
+      let allUsersList = [adminObj, ...(storeData.users || [])];
+
+      if(allUsersList.length === 0) {
         container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">ยังไม่มีสมาชิกในระบบ</p>`;
         return;
       }
-      container.innerHTML = storeData.users.map((u, idx) => `
-        <div class="card" style="padding:12px; margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <div style="font-weight:600; font-size:0.85rem;">👤 ${u.username || 'สมาชิก'}</div>
-            <button class="action-btn delete" style="width:28px; height:28px;" onclick="deleteUser(${idx})"><i class="fa-solid fa-trash"></i></button>
+
+      container.innerHTML = allUsersList.map((u, idx) => {
+        let isAdmin = (u.email === ADMIN_EMAIL);
+        // ถ้าเป็นแอดมิน idx จริงใน users จะไม่มี ให้กำหนดช่องแก้ไขพิเศษ
+        let realUserIdx = idx - 1; 
+
+        return `
+          <div class="card" style="padding:12px; margin-bottom:10px; border-left: 4px solid ${isAdmin ? '#d97706' : '#5a3e2b'};">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <div style="font-weight:600; font-size:0.85rem;">👤 ${u.username || 'สมาชิก'} ${isAdmin ? '<span style="background:#fef3c7; color:#b45309; font-size:0.65rem; padding:1px 6px; border-radius:4px;">ผู้ดูแลระบบ</span>' : ''}</div>
+              ${!isAdmin ? `<button class="action-btn delete" style="width:28px; height:28px;" onclick="deleteUser(${realUserIdx})"><i class="fa-solid fa-trash"></i></button>` : ''}
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">📧 ${u.email}</div>
+            
+            ${!isAdmin ? `
+              <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+                <label style="font-size:0.75rem; font-weight:600;">สถานะ:</label>
+                <select class="form-control" style="padding:4px; font-size:0.75rem;" onchange="updateUserRole(${realUserIdx}, this.value)">
+                  <option value="customer" ${u.role === 'customer' ? 'selected' : ''}>ลูกค้าทั่วไป</option>
+                  <option value="agent" ${u.role === 'agent' ? 'selected' : ''}>ตัวแทน</option>
+                </select>
+              </div>
+            ` : ''}
+
+            <div style="display:flex; gap:8px; align-items:center;">
+              <label style="font-size:0.75rem; font-weight:600;">เครดิต:</label>
+              <input type="number" class="form-control" style="padding:4px; font-size:0.75rem;" value="${u.credit || 0}" id="${isAdmin ? 'adminCredInput' : 'userCredInput_'+realUserIdx}">
+              <button class="header-btn" style="background:#137333; color:white;" onclick="${isAdmin ? 'updateAdminCredit()' : 'updateUserCredit('+realUserIdx+')'}">บันทึก</button>
+            </div>
           </div>
-          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">📧 ${u.email}</div>
-          <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
-            <label style="font-size:0.75rem; font-weight:600;">สถานะ:</label>
-            <select class="form-control" style="padding:4px; font-size:0.75rem;" onchange="updateUserRole(${idx}, this.value)">
-              <option value="customer" ${u.role === 'customer' ? 'selected' : ''}>ลูกค้าทั่วไป</option>
-              <option value="agent" ${u.role === 'agent' ? 'selected' : ''}>ตัวแทน</option>
-            </select>
-          </div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <label style="font-size:0.75rem; font-weight:600;">เครดิต:</label>
-            <input type="number" class="form-control" style="padding:4px; font-size:0.75rem;" value="${u.credit || 0}" id="userCredInput_${idx}">
-            <button class="header-btn" style="background:#137333; color:white;" onclick="updateUserCredit(${idx})">บันทึก</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
+    }
+
+    function updateAdminCredit() {
+      let val = parseFloat(document.getElementById('adminCredInput').value) || 0;
+      storeData.adminCredit = val;
+      saveData();
+      renderAllAdmin();
+      showPopup("สำเร็จ", "อัปเดตเครดิตแอดมินเรียบร้อย");
     }
 
     function updateUserRole(idx, role) {
@@ -637,7 +665,7 @@
     function deleteUser(idx) {
       storeData.users.splice(idx, 1);
       saveData();
-      renderUsers();
+      renderAllAdmin();
       showPopup("สำเร็จ", "ลบสมาชิกเรียบร้อยแล้ว");
     }
 
