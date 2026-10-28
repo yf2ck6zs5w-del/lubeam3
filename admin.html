@@ -15,8 +15,9 @@
     body { background: var(--bg-cream); color: var(--text-brown); min-height: 100vh; }
     .admin-container { max-width: 480px; margin: 0 auto; background: var(--bg-cream); min-height: 100vh; position: relative; padding-bottom: 50px; }
     
-    [netlify-badge], iframe[src*="netlify"], div[class*="netlify"] {
-      display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;
+    /* ซ่อนป้าย Netlify ถาวร */
+    net-lify-badge, .netlify-badge, div[id^="netlify-badge"], iframe[src*="netlify"], div[class*="netlify"] {
+      display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; position: absolute !important; top: -9999px !important;
     }
 
     .admin-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 90; }
@@ -180,13 +181,11 @@
           <div class="form-group"><label>ราคาปกติ (บาท)</label><input type="number" id="newProdPrice" class="form-control"></div>
           <div class="form-group"><label>ราคาตัวแทน (บาท)</label><input type="number" id="newProdAgentPrice" class="form-control"></div>
           
-          <!-- หมวดหมู่ / ป้ายกำกับ (จัดระยะห่างชัดเจน) -->
           <div class="form-group" style="background: #fdfaf7; padding: 10px; border-radius: 10px; border: 1px solid var(--border-color);">
             <label style="color: #b45309;"><i class="fa-solid fa-tags"></i> หมวดหมู่ / ป้ายกำกับ</label>
             <input type="text" id="newProdCategory" class="form-control" placeholder="เช่น YouTube, Netflix ฯลฯ" style="margin-top: 4px;">
           </div>
 
-          <!-- ลิงก์รูปภาพสินค้า (แยกส่วนชัดเจน มีเส้นคั่น) -->
           <div class="form-group" style="background: #fdfaf7; padding: 10px; border-radius: 10px; border: 1px solid var(--border-color);">
             <label style="color: #137333;"><i class="fa-regular fa-image"></i> ลิงก์รูปภาพสินค้า</label>
             <input type="text" id="newProdImg" class="form-control" placeholder="https://..." style="margin-top: 4px;">
@@ -198,7 +197,7 @@
               <label style="margin-bottom:0;">สต็อกสินค้า (คั่นแต่ละชุดด้วยการ Enter เว้นบรรทัด)</label>
               <span id="newProdStockCountBadge" style="font-size:0.75rem; font-weight:700; color:#137333; background:#e6f4ea; padding:2px 8px; border-radius:6px;">รวม: 0 สต็อก</span>
             </div>
-            <textarea id="newProdStock" class="form-control" rows="8" placeholder="Netflix ชุดที่ 1 (หลายบรรทัด)&#10;Mail: ...&#10;Pass: ...&#10;&#10;Netflix ชุดที่ 2 (เว้น 1 บรรทัดด้านบน)&#10;Mail: ...&#10;Pass: ..." oninput="updateStockCountPreview('newProdStock', 'newProdStockCountBadge')"></textarea>
+            <textarea id="newProdStock" class="form-control" rows="8" placeholder="Netflix ชุดที่ 1...&#10;&#10;Netflix ชุดที่ 2..." oninput="updateStockCountPreview('newProdStock', 'newProdStockCountBadge')"></textarea>
           </div>
           <button class="form-control" style="background:#137333; color:white; font-weight:600; cursor:pointer; border:none;" onclick="addNewProduct()">บันทึกเพิ่มสินค้า</button>
         </div>
@@ -295,13 +294,11 @@
       <div class="form-group"><label>ราคาปกติ</label><input type="number" id="editProdPrice" class="form-control"></div>
       <div class="form-group"><label>ราคาตัวแทน</label><input type="number" id="editProdAgentPrice" class="form-control"></div>
       
-      <!-- หมวดหมู่ตอนแก้ไข -->
       <div class="form-group" style="background: #fdfaf7; padding: 10px; border-radius: 10px; border: 1px solid var(--border-color);">
         <label style="color: #b45309;"><i class="fa-solid fa-tags"></i> หมวดหมู่</label>
         <input type="text" id="editProdCategory" class="form-control" style="margin-top: 4px;">
       </div>
 
-      <!-- ลิงก์รูปภาพตอนแก้ไข -->
       <div class="form-group" style="background: #fdfaf7; padding: 10px; border-radius: 10px; border: 1px solid var(--border-color);">
         <label style="color: #137333;"><i class="fa-regular fa-image"></i> ลิงก์รูปภาพ</label>
         <input type="text" id="editProdImg" class="form-control" style="margin-top: 4px;">
@@ -323,50 +320,29 @@
   </div>
 
   <script>
-    let storeData = {
-      storeName: 'luvbeamshop',
-      logoUrl: '',
-      themeColor: '#8c5a3c',
-      products: [],
-      featuredIds: [],
-      users: [],
-      banners: [],
-      faq: [],
-      topupHistory: [],
-      orderHistory: []
-    };
-
+    let storeData = { storeName: 'luvbeamshop', logoUrl: '', themeColor: '#8c5a3c', products: [], featuredIds: [], users: [], banners: [], faq: [], topupHistory: [], orderHistory: [] };
     let editingStockProductId = null;
 
-    window.onload = function() {
-      loadData();
-      renderAllAdmin();
-    };
+    window.onload = function() { loadData(); renderAllAdmin(); };
 
     function loadData() {
       const data = localStorage.getItem('POTATO_STORE_DATA');
-      if(data) {
-        try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){}
-      }
+      if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
       if(!storeData.topupHistory) storeData.topupHistory = [];
       if(!storeData.orderHistory) storeData.orderHistory = [];
       if(!storeData.faq) storeData.faq = [];
       if(!storeData.featuredIds) storeData.featuredIds = [];
-      if(!storeData.themeColor) storeData.themeColor = '#8c5a3c';
+      if(!storeData.users) storeData.users = [];
     }
 
-    function saveData() {
-      localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
-    }
+    function saveData() { localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData)); }
 
     function showPopup(title, msg) {
       document.getElementById('popupTitle').innerText = title;
       document.getElementById('popupMessage').innerText = msg;
       document.getElementById('cutePopupModal').classList.add('open');
     }
-    function closePopup() {
-      document.getElementById('cutePopupModal').classList.remove('open');
-    }
+    function closePopup() { document.getElementById('cutePopupModal').classList.remove('open'); }
 
     function toggleSidebar() {
       document.getElementById('adminSidebar').classList.toggle('open');
@@ -389,9 +365,7 @@
 
       let totalOrders = storeData.orderHistory ? storeData.orderHistory.length : 0;
       let totalStock = 0;
-      if(storeData.products) {
-        storeData.products.forEach(p => { if(p.stockList) totalStock += p.stockList.length; });
-      }
+      if(storeData.products) { storeData.products.forEach(p => { if(p.stockList) totalStock += p.stockList.length; }); }
       let totalUsers = storeData.users ? storeData.users.length : 0;
       let totalTx = (storeData.topupHistory ? storeData.topupHistory.length : 0) + totalOrders;
 
@@ -466,7 +440,6 @@
         container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:10px;">ยังไม่มีสินค้าในระบบ</p>`;
         return;
       }
-
       container.innerHTML = storeData.products.map(p => `
         <div class="product-admin-card">
           <div class="product-admin-top">
@@ -496,11 +469,10 @@
       const container = document.getElementById('featuredProductsCheckList');
       if(!container) return;
       if(!storeData.products || storeData.products.length === 0) {
-        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">ยังไม่มีสินค้าสำหรับเลือกเป็นสินค้าแนะนำ</p>`;
+        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">ยังไม่มีสินค้า</p>`;
         return;
       }
       if(!storeData.featuredIds) storeData.featuredIds = [];
-
       container.innerHTML = storeData.products.map(p => {
         let isChecked = storeData.featuredIds.includes(p.id);
         return `
@@ -518,11 +490,8 @@
     function toggleFeatured(id) {
       if(!storeData.featuredIds) storeData.featuredIds = [];
       let idx = storeData.featuredIds.indexOf(id);
-      if(idx > -1) {
-        storeData.featuredIds.splice(idx, 1);
-      } else {
-        storeData.featuredIds.push(id);
-      }
+      if(idx > -1) storeData.featuredIds.splice(idx, 1);
+      else storeData.featuredIds.push(id);
       saveData();
       showPopup("สำเร็จ", "อัปเดตรายการสินค้าแนะนำเรียบร้อย");
     }
@@ -537,17 +506,12 @@
         document.getElementById('stockModal').classList.add('open');
       }
     }
-
-    function closeStockModal() {
-      document.getElementById('stockModal').classList.remove('open');
-      editingStockProductId = null;
-    }
+    function closeStockModal() { document.getElementById('stockModal').classList.remove('open'); editingStockProductId = null; }
 
     function saveStockChanges() {
       if(!editingStockProductId) return;
       let rawText = document.getElementById('modalStockTextarea').value.trim();
       let newStockList = parseStockByDoubleNewline(rawText);
-
       let p = storeData.products.find(item => item.id === editingStockProductId);
       if(p) {
         p.stockList = newStockList;
@@ -571,10 +535,7 @@
         document.getElementById('editProdModal').classList.add('open');
       }
     }
-
-    function closeEditProdModal() {
-      document.getElementById('editProdModal').classList.remove('open');
-    }
+    function closeEditProdModal() { document.getElementById('editProdModal').classList.remove('open'); }
 
     function saveEditProduct() {
       let id = parseInt(document.getElementById('editProdId').value);
@@ -595,9 +556,7 @@
 
     function deleteProduct(id) {
       storeData.products = storeData.products.filter(p => p.id !== id);
-      if(storeData.featuredIds) {
-        storeData.featuredIds = storeData.featuredIds.filter(fid => fid !== id);
-      }
+      if(storeData.featuredIds) storeData.featuredIds = storeData.featuredIds.filter(fid => fid !== id);
       saveData();
       renderAllAdmin();
       showPopup("สำเร็จ", "ลบสินค้าเรียบร้อยแล้ว");
@@ -651,7 +610,7 @@
           <div style="display:flex; gap:8px; align-items:center;">
             <label style="font-size:0.75rem; font-weight:600;">เครดิต:</label>
             <input type="number" class="form-control" style="padding:4px; font-size:0.75rem;" value="${u.credit || 0}" id="userCredInput_${idx}">
-            <button class="header-btn" style="background:#137333; color:white;" onclick="updateUserCredit(${idx})">บันทึกเครดิต</button>
+            <button class="header-btn" style="background:#137333; color:white;" onclick="updateUserCredit(${idx})">บันทึก</button>
           </div>
         </div>
       `).join('');
@@ -698,7 +657,7 @@
     function renderFaq() {
       const container = document.getElementById('faqListContainer');
       if(!storeData.faq || storeData.faq.length === 0) {
-        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">ยังไม่มีคำถามที่พบบ่อย</p>`;
+        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">ยังไม่มีคำถาม</p>`;
         return;
       }
       container.innerHTML = storeData.faq.map((f, idx) => `
