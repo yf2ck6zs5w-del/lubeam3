@@ -58,7 +58,7 @@
     .add-cart-btn.disabled { opacity: 0.4; cursor: not-allowed; background: #eee; }
 
     .bottom-nav { position: fixed !important; bottom: 0 !important; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex !important; justify-content: space-around !important; padding: 8px 0 10px 0; z-index: 9999 !important; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 0.75rem; gap: 2px; cursor: pointer; text-decoration: none; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 0.75rem; gap: 2px; cursor: pointer; text-decoration: none; position: relative; }
     .nav-item i { display: block; font-size: 1.2rem; margin-bottom: 2px; }
     .nav-item.active { color: var(--primary-color); font-weight: 600; }
 
@@ -241,7 +241,7 @@
       </div>
     </div>
 
-    <!-- Modal กฎก่อนซื้อสินค้า / รายละเอียดสินค้า -->
+    <!-- Modal รายละเอียดสินค้าก่อนลงตะกร้า -->
     <div id="productRuleModal" class="modal-overlay">
       <div class="modal-content" style="text-align: center; padding: 22px;">
         <h3 style="margin-bottom: 6px; font-size: 1rem; color:var(--text-brown);">รายละเอียดสินค้า</h3>
@@ -257,7 +257,7 @@
       </div>
     </div>
 
-    <!-- Modal แสดงสินค้าในสต็อกหลังซื้อพร้อมปุ่มคัดลอกรักษาฟอร์แมตเดิม -->
+    <!-- Modal แสดงสินค้าในสต็อกหลังซื้อพร้อมปุ่มคัดลอก -->
     <div id="purchasedStockModal" class="modal-overlay">
       <div class="modal-content" style="text-align: center; padding: 22px;">
         <h3 style="margin-bottom: 6px; font-size: 1.1rem; color:var(--btn-brown);">🎉 สั่งซื้อสำเร็จและได้รับสินค้าแล้ว</h3>
@@ -267,6 +267,18 @@
         
         <button class="btn-action" onclick="copyPurchasedStock()" style="margin-bottom: 6px; background: #27ae60;"><i class="fa-regular fa-copy"></i> คัดลอกข้อมูลสินค้าทั้งหมด</button>
         <button class="form-control" onclick="closePurchasedStockModal()" style="background: #eee; color:var(--text-brown); border: none; cursor: pointer; font-weight: 600; border-radius: 20px; padding: 8px;">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+
+    <!-- Modal ดูประวัติ (ประวัติการสั่งซื้อ / ประวัติเติมเงิน) -->
+    <div id="fullHistoryModal" class="modal-overlay">
+      <div class="modal-content" style="text-align: left; max-width: 400px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 id="fullHistoryTitle" style="font-size: 1rem; color:var(--btn-brown);">ประวัติ</h3>
+          <i class="fa-solid fa-xmark" style="cursor:pointer; font-size:1.2rem;" onclick="closeHistoryModal()"></i>
+        </div>
+        <div id="fullHistoryContent" style="max-height: 380px; overflow-y: auto; font-size: 0.8rem;"></div>
+        <button class="btn-action" onclick="closeHistoryModal()" style="margin-top: 14px; background: var(--btn-brown);">ปิด</button>
       </div>
     </div>
 
@@ -303,7 +315,10 @@
       <a class="nav-item active" onclick="switchTab('home')" id="nav-home"><i class="fa-solid fa-house"></i><span>หน้าแรก</span></a>
       <a class="nav-item" onclick="switchTab('products')" id="nav-products"><i class="fa-solid fa-box-archive"></i><span>สินค้า</span></a>
       <a class="nav-item" onclick="switchTab('search')" id="nav-search"><i class="fa-solid fa-magnifying-glass"></i><span>ค้นหา</span></a>
-      <a class="nav-item" onclick="switchTab('cart')" id="nav-cart"><i class="fa-solid fa-basket-shopping"></i><span>ตะกร้า</span></a>
+      <a class="nav-item" onclick="switchTab('cart')" id="nav-cart">
+        <i class="fa-solid fa-basket-shopping"></i><span>ตะกร้า</span>
+        <span id="navCartBadgeCount" style="position: absolute; top:0; right:15px; background:var(--tag-new); color:white; font-size:0.5rem; border-radius:50%; width:14px; height:14px; display:flex; align-items:center; justify-content:center; display:none;">0</span>
+      </a>
       <a class="nav-item" onclick="switchTab('account')" id="nav-account"><i class="fa-solid fa-user"></i><span>บัญชี</span></a>
     </nav>
   </div>
@@ -398,6 +413,7 @@
           }
           document.getElementById('adminMenuBtnContainer').style.display = 'none';
         }
+        renderUserHistorySummary();
       } else {
         document.getElementById('loggedInAccountView').style.display = 'none';
         document.getElementById('loggedOutAccountView').style.display = 'block';
@@ -410,6 +426,19 @@
       renderProducts(storeData.products, 'allProductsGridContainer');
       renderCart();
       renderFaqFrontend();
+      updateCartBadgeCount();
+    }
+
+    function updateCartBadgeCount() {
+      let count = storeData.cart ? storeData.cart.length : 0;
+      document.getElementById('cartBadgeCount').innerText = count;
+      let navBadge = document.getElementById('navCartBadgeCount');
+      if(count > 0) {
+        navBadge.innerText = count;
+        navBadge.style.display = 'flex';
+      } else {
+        navBadge.style.display = 'none';
+      }
     }
 
     function renderProducts(items, containerId) {
@@ -426,7 +455,7 @@
           <div class="product-card" onclick="promptAddToCart(${p.id})">
             <div class="product-img-box">
               <span class="stock-badge ${isAvail ? 'in' : 'out'}">${isAvail ? 'มีสินค้า ('+stockCount+')' : 'สินค้าหมด'}</span>
-              ${p.image ? `<img src="${p.image}" onerror="this.style.display='none'">` : '<i class="fa-solid fa-box" style="font-size:2rem; color:var(--text-muted);"></i>'}
+              ${p.image ? `<img src="${p.image}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=No+Image';">` : '<i class="fa-solid fa-box" style="font-size:2rem; color:var(--text-muted);"></i>'}
             </div>
             <div class="product-info">
               <div class="product-name">${p.name}</div>
@@ -472,7 +501,6 @@
       if(p && p.stockList && p.stockList.length > 0) {
         storeData.cart.push(p);
         saveData();
-        document.getElementById('cartBadgeCount').innerText = storeData.cart.length;
         closeRuleModal();
         showPopup("สำเร็จ", `เพิ่ม "${p.name}" ลงตะกร้าแล้ว`);
         renderAll();
@@ -484,7 +512,7 @@
       if(!container) return;
       if(!storeData.cart || storeData.cart.length === 0) {
         container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px;">ตะกร้าว่างเปล่า</p>`;
-        document.getElementById('cartBadgeCount').innerText = '0';
+        updateCartBadgeCount();
         return;
       }
       let total = 0;
@@ -510,7 +538,7 @@
           <button class="btn-action" style="width:auto; padding:8px 16px; margin:0; background:#27ae60;" onclick="checkout()">ชำระเงินจริง</button>
         </div>
       `;
-      document.getElementById('cartBadgeCount').innerText = storeData.cart.length;
+      updateCartBadgeCount();
     }
 
     function checkout() {
@@ -520,7 +548,6 @@
 
       if(currentCred < total) return showPopup("เครดิตไม่พอ", "ยอดเครดิตของคุณไม่เพียงพอ กรุณาเติมเครดิตก่อนทำรายการ");
 
-      // ตัดเครดิตจริง
       if(storeData.currentUser === ADMIN_EMAIL) {
         storeData.adminCredit = currentCred - total;
       } else {
@@ -532,7 +559,7 @@
       storeData.cart.forEach(c => {
         let prod = storeData.products.find(p => p.id === c.id);
         if(prod && prod.stockList && prod.stockList.length > 0) {
-          let stockItem = prod.stockList.shift(); // ตัดสต็อกบรรทัดแรกออก
+          let stockItem = prod.stockList.shift();
           receivedItemsText += `${stockItem}\n`;
         } else {
           receivedItemsText += `(${c.name}: สินค้าหมดสต็อก)\n`;
@@ -555,7 +582,6 @@
       saveData();
       renderAll();
 
-      document.getElementById('purchasedStockListContentinnerText') = lastPurchasedStockText;
       document.getElementById('purchasedStockListContent').innerText = lastPurchasedStockText;
       document.getElementById('purchasedStockModal').classList.add('open');
     }
@@ -568,9 +594,58 @@
       });
     }
 
+    function copyOrderHistoryItem(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showPopup("สำเร็จ", "คัดลอกข้อมูลสินค้าเรียบร้อยแล้ว");
+      }).catch(err => {
+        showPopup("ข้อผิดพลาด", "ไม่สามารถคัดลอกได้");
+      });
+    }
+
     function closePurchasedStockModal() {
       document.getElementById('purchasedStockModal').classList.remove('open');
       switchTab('home');
+    }
+
+    function openHistoryModal(type) {
+      let title = type === 'order' ? '📦 ประวัติการสั่งซื้อ' : '💳 ประวัติการเติมเงิน';
+      let contentHtml = '';
+      
+      if(type === 'order') {
+        let myOrders = (storeData.orderHistory || []).filter(o => o.user === storeData.currentUser);
+        contentHtml = myOrders.length ? myOrders.map(o => `
+          <div style="background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:12px;">
+            <div style="margin-bottom:8px;">
+              <div style="font-weight:700; font-size:0.88rem; color:var(--text-brown);">${o.itemNames}</div>
+              <div style="font-weight:700; font-size:0.85rem; color:#d97706; margin-top:2px;">฿${o.total.toFixed(2)}</div>
+              <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">⏱️ ${o.time}</div>
+            </div>
+            <div style="background:var(--card-cream); padding:12px; border-radius:8px; border:1px solid var(--border-color); position:relative;">
+              <button onclick="copyOrderHistoryItem(${JSON.stringify(o.details || '')})" style="position:absolute; top:8px; right:8px; background:var(--btn-brown); color:white; border:none; padding:4px 10px; border-radius:6px; font-size:0.68rem; font-weight:600; cursor:pointer;"><i class="fa-regular fa-copy"></i> คัดลอก</button>
+              <div style="font-family:monospace; white-space:pre-wrap; word-break:break-all; font-size:0.78rem; line-height:1.4; color:var(--text-brown); padding-right:55px;">${o.details || 'ไม่มีข้อมูล'}</div>
+            </div>
+          </div>
+        `).join('') : '<p style="color:var(--text-muted); text-align:center; padding:20px;">ยังไม่มีประวัติการสั่งซื้อ</p>';
+      } else {
+        let myTopup = (storeData.topupHistory || []).filter(t => t.email === storeData.currentUser);
+        contentHtml = myTopup.length ? myTopup.map(t => `
+          <div style="background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; color:#27ae60; font-size:0.95rem;">+฿${t.amount.toFixed(2)}</div>
+              <div style="font-size:0.7rem; color:var(--text-muted);">⏱️ ${t.time}</div>
+            </div>
+            <span style="font-size:0.75rem; background:#e6f4ea; color:#137333; padding:3px 8px; border-radius:6px; font-weight:600;">สำเร็จ</span>
+          </div>
+        `).join('') : '<p style="color:var(--text-muted); text-align:center; padding:20px;">ยังไม่มีประวัติการเติมเงิน</p>';
+      }
+
+      document.getElementById('fullHistoryTitle').innerText = title;
+      document.getElementById('fullHistoryContent').innerHTML = contentHtml;
+      document.getElementById('fullHistoryModal').classList.add('open');
+    }
+
+    function closeHistoryModal() {
+      document.getElementById('fullHistoryModal').classList.remove('open');
     }
 
     function toggleAuthMode() {
@@ -628,6 +703,13 @@
         if(u) u.credit = (u.credit || 0) + amt;
       }
 
+      if(!storeData.topupHistory) storeData.topupHistory = [];
+      storeData.topupHistory.unshift({
+        email: storeData.currentUser,
+        amount: amt,
+        time: new Date().toLocaleString()
+      });
+
       saveData();
       closeTopUpModal();
       document.getElementById('topupAmountInput').value = '';
@@ -648,6 +730,15 @@
           <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">A: ${f.a}</div>
         </div>
       `).join('');
+    }
+
+    function renderUserHistorySummary() {
+      if(!storeData.currentUser) return;
+      let myTopup = (storeData.topupHistory || []).filter(t => t.email === storeData.currentUser);
+      let myOrders = (storeData.orderHistory || []).filter(o => o.user === storeData.currentUser);
+
+      document.getElementById('orderCountSummary').innerText = myOrders.length + " รายการ";
+      document.getElementById('topupCountSummary').innerText = myTopup.length + " รายการ";
     }
 
     function filterProducts() {
