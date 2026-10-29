@@ -332,11 +332,29 @@
     let storeData = { storeName: 'luvbeamshop', logoUrl: '', themeColor: '#8c5a3c', products: [], featuredIds: [], users: [], banners: [], faq: [], topupHistory: [], orderHistory: [] };
     let editingStockProductId = null;
 
-    window.onload = function() { loadData(); renderAllAdmin(); };
+    window.onload = async function() {
+      await loadData();
+      renderAllAdmin();
+    };
 
-    function loadData() {
-      const data = localStorage.getItem('POTATO_STORE_DATA');
-      if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
+    // โหลดข้อมูลจาก Supabase store_settings
+    async function loadData() {
+      try {
+        let { data, error } = await supabaseClient
+          .from('store_settings')
+          .select('*')
+          .eq('id', 1)
+          .single();
+
+        if (data && data.settings) {
+          storeData = Object.assign(storeData, data.settings);
+        }
+      } catch (e) {
+        console.log("Load from Supabase error, fallback to local:", e);
+        const data = localStorage.getItem('POTATO_STORE_DATA');
+        if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
+      }
+
       if(!storeData.topupHistory) storeData.topupHistory = [];
       if(!storeData.orderHistory) storeData.orderHistory = [];
       if(!storeData.faq) storeData.faq = [];
@@ -344,7 +362,18 @@
       if(!storeData.users) storeData.users = [];
     }
 
-    function saveData() { localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData)); }
+    // บันทึกข้อมูลลง Supabase store_settings และ localStorage สำรอง
+    async function saveData() {
+      localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
+      
+      try {
+        await supabaseClient
+          .from('store_settings')
+          .upsert({ id: 1, settings: storeData });
+      } catch (e) {
+        console.log("Save to Supabase error:", e);
+      }
+    }
 
     function showPopup(title, msg) {
       document.getElementById('popupTitle').innerText = title;
@@ -367,8 +396,6 @@
     }
 
     function renderAllAdmin() {
-      loadData();
-
       document.getElementById('headerStoreTitle').innerText = storeData.storeName || 'luvbeamshop';
       document.getElementById('settingStoreName').value = storeData.storeName || '';
       document.getElementById('settingLogoUrl').value = storeData.logoUrl || '';
@@ -409,16 +436,16 @@
       document.getElementById(badgeId).innerText = `รวม: ${blocks.length} สต็อก`;
     }
 
-    function saveSettings() {
+    async function saveSettings() {
       storeData.storeName = document.getElementById('settingStoreName').value.trim() || 'luvbeamshop';
       storeData.logoUrl = document.getElementById('settingLogoUrl').value.trim();
       storeData.themeColor = document.getElementById('settingThemeColor').value;
-      saveData();
+      await saveData();
       renderAllAdmin();
       showPopup("สำเร็จ", "บันทึกการตั้งค่าเรียบร้อยแล้ว");
     }
 
-    function addNewProduct() {
+    async function addNewProduct() {
       let name = document.getElementById('newProdName').value.trim();
       let price = parseFloat(document.getElementById('newProdPrice').value) || 0;
       let agentPrice = parseFloat(document.getElementById('newProdAgentPrice').value) || 0;
@@ -433,7 +460,7 @@
       if(!storeData.products) storeData.products = [];
       storeData.products.push({ id: Date.now(), name, price, agentPrice, category, image, rule, stockList });
 
-      saveData();
+      await saveData();
       document.getElementById('newProdName').value = '';
       document.getElementById('newProdPrice').value = '';
       document.getElementById('newProdAgentPrice').value = '';
@@ -499,12 +526,12 @@
       }).join('');
     }
 
-    function toggleFeatured(id) {
+    async function toggleFeatured(id) {
       if(!storeData.featuredIds) storeData.featuredIds = [];
       let idx = storeData.featuredIds.indexOf(id);
       if(idx > -1) storeData.featuredIds.splice(idx, 1);
       else storeData.featuredIds.push(id);
-      saveData();
+      await saveData();
       showPopup("สำเร็จ", "อัปเดตรายการสินค้าแนะนำเรียบร้อย");
     }
 
@@ -520,14 +547,14 @@
     }
     function closeStockModal() { document.getElementById('stockModal').classList.remove('open'); editingStockProductId = null; }
 
-    function saveStockChanges() {
+    async function saveStockChanges() {
       if(!editingStockProductId) return;
       let rawText = document.getElementById('modalStockTextarea').value.trim();
       let newStockList = parseStockByDoubleNewline(rawText);
       let p = storeData.products.find(item => item.id === editingStockProductId);
       if(p) {
         p.stockList = newStockList;
-        saveData();
+        await saveData();
         renderAllAdmin();
         closeStockModal();
         showPopup("สำเร็จ", "อัปเดตสต็อกเรียบร้อยแล้ว");
@@ -549,7 +576,7 @@
     }
     function closeEditProdModal() { document.getElementById('editProdModal').classList.remove('open'); }
 
-    function saveEditProduct() {
+    async function saveEditProduct() {
       let id = parseInt(document.getElementById('editProdId').value);
       let p = storeData.products.find(item => item.id === id);
       if(p) {
@@ -559,27 +586,27 @@
         p.category = document.getElementById('editProdCategory').value.trim();
         p.image = document.getElementById('editProdImg').value.trim();
         p.rule = document.getElementById('editProdRule').value.trim();
-        saveData();
+        await saveData();
         renderAllAdmin();
         closeEditProdModal();
         showPopup("สำเร็จ", "แก้ไขข้อมูลสินค้าเรียบร้อยแล้ว");
       }
     }
 
-    function deleteProduct(id) {
+    async function deleteProduct(id) {
       storeData.products = storeData.products.filter(p => p.id !== id);
       if(storeData.featuredIds) storeData.featuredIds = storeData.featuredIds.filter(fid => fid !== id);
-      saveData();
+      await saveData();
       renderAllAdmin();
       showPopup("สำเร็จ", "ลบสินค้าเรียบร้อยแล้ว");
     }
 
-    function addBanner() {
+    async function addBanner() {
       let url = document.getElementById('bannerImgInput').value.trim();
       if(!url) return;
       if(!storeData.banners) storeData.banners = [];
       storeData.banners.push(url);
-      saveData();
+      await saveData();
       document.getElementById('bannerImgInput').value = '';
       renderBanners();
       showPopup("สำเร็จ", "เพิ่มแบนเนอร์แล้ว");
@@ -594,9 +621,15 @@
       container.innerHTML = storeData.banners.map((b, idx) => `
         <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:10px;">
           <img src="${b}" style="width:80px; height:40px; object-fit:cover; border-radius:6px;">
-          <button class="action-btn delete" onclick="storeData.banners.splice(${idx},1); saveData(); renderBanners();"><i class="fa-solid fa-trash"></i></button>
+          <button class="action-btn delete" onclick="removeBanner(${idx})"><i class="fa-solid fa-trash"></i></button>
         </div>
       `).join('');
+    }
+
+    async function removeBanner(idx) {
+      storeData.banners.splice(idx, 1);
+      await saveData();
+      renderBanners();
     }
 
     function renderUsers() {
@@ -642,46 +675,46 @@
       }).join('');
     }
 
-    function updateAdminCredit() {
+    async function updateAdminCredit() {
       let val = parseFloat(document.getElementById('adminCredInput').value) || 0;
       storeData.adminCredit = val;
-      saveData();
+      await saveData();
       renderAllAdmin();
       showPopup("สำเร็จ", "อัปเดตเครดิตแอดมินเรียบร้อย");
     }
 
-    function updateUserRole(idx, role) {
+    async function updateUserRole(idx, role) {
       if(storeData.users[idx]) {
         storeData.users[idx].role = role;
-        saveData();
+        await saveData();
         showPopup("สำเร็จ", "อัปเดตสถานะสมาชิกเรียบร้อย");
       }
     }
 
-    function updateUserCredit(idx) {
+    async function updateUserCredit(idx) {
       let val = parseFloat(document.getElementById(`userCredInput_${idx}`).value) || 0;
       if(storeData.users[idx]) {
         storeData.users[idx].credit = val;
-        saveData();
+        await saveData();
         renderUsers();
         showPopup("สำเร็จ", "อัปเดตเครดิตสมาชิกเรียบร้อย");
       }
     }
 
-    function deleteUser(idx) {
+    async function deleteUser(idx) {
       storeData.users.splice(idx, 1);
-      saveData();
+      await saveData();
       renderAllAdmin();
       showPopup("สำเร็จ", "ลบสมาชิกเรียบร้อยแล้ว");
     }
 
-    function addFaq() {
+    async function addFaq() {
       let q = document.getElementById('faqQuestion').value.trim();
       let a = document.getElementById('faqAnswer').value.trim();
       if(!q || !a) return showPopup("แจ้งเตือน", "กรุณากรอกคำถามและคำตอบ");
       if(!storeData.faq) storeData.faq = [];
       storeData.faq.push({ q, a });
-      saveData();
+      await saveData();
       document.getElementById('faqQuestion').value = '';
       document.getElementById('faqAnswer').value = '';
       renderFaq();
@@ -698,9 +731,15 @@
         <div class="card" style="padding:10px; margin-bottom:8px;">
           <div style="font-weight:600; font-size:0.85rem; color:var(--btn-brown);">Q: ${f.q}</div>
           <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">A: ${f.a}</div>
-          <button class="action-btn delete" style="margin-top:6px;" onclick="storeData.faq.splice(${idx},1); saveData(); renderFaq();"><i class="fa-solid fa-trash"></i> ลบ</button>
+          <button class="action-btn delete" style="margin-top:6px;" onclick="removeFaq(${idx})"><i class="fa-solid fa-trash"></i> ลบ</button>
         </div>
       `).join('');
+    }
+
+    async function removeFaq(idx) {
+      storeData.faq.splice(idx, 1);
+      await saveData();
+      renderFaq();
     }
 
     function renderTopupHistory() {
