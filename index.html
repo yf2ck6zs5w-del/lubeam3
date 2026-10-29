@@ -362,21 +362,47 @@
     let currentCategoryFilter = 'all';
     let currentCategoryPageFilter = 'all';
 
-    window.onload = function() {
-      loadFromStorage();
+    window.onload = async function() {
+      await loadFromStorage();
       checkSessionTimeout();
       renderAll();
       loadBankSettingsToFrontend();
     };
 
-    function loadFromStorage() {
-      const data = localStorage.getItem('POTATO_STORE_DATA');
-      if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
+    // โหลดข้อมูลจาก Supabase store_settings
+    async function loadFromStorage() {
+      try {
+        let { data, error } = await supabaseClient
+          .from('store_settings')
+          .select('*')
+          .eq('id', 1)
+          .single();
+
+        if (data && data.settings) {
+          storeData = Object.assign(storeData, data.settings);
+        }
+      } catch (e) {
+        console.log("Load from Supabase error, fallback to local:", e);
+        const data = localStorage.getItem('POTATO_STORE_DATA');
+        if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
+      }
       if(!storeData.users) storeData.users = [];
       if(!storeData.banners) storeData.banners = [];
     }
     
-    function saveData() { localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData)); }
+    // บันทึกข้อมูลลง Supabase store_settings แบบเรียลไทม์
+    async function saveData() {
+      // เซฟสำรองไว้ใน localStorage ป้องกันเน็ตหลุด
+      localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
+      
+      try {
+        await supabaseClient
+          .from('store_settings')
+          .upsert({ id: 1, settings: storeData });
+      } catch (e) {
+        console.log("Save to Supabase error:", e);
+      }
+    }
 
     function checkSessionTimeout() {
       if(storeData.currentUser && storeData.loginTime) {
@@ -403,8 +429,6 @@
     }
 
     function renderAll() {
-      loadFromStorage();
-      checkSessionTimeout();
       document.getElementById('headerStoreName').innerText = storeData.storeName || 'luvbeamshop';
       document.getElementById('heroStoreName').innerText = storeData.storeName || 'luvbeamshop';
 
