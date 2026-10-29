@@ -66,7 +66,7 @@
     .floating-line-btn { position: fixed; bottom: 85px; right: 20px; width: 50px; height: 50px; background: #06c755; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 4px 12px rgba(6,199,85,0.4); z-index: 999; text-decoration: none; transition: transform 0.2s; }
     .floating-line-btn:active { transform: scale(0.9); }
 
-    .bottom-nav { position: fixed !important; bottom: 0 !important; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex !important; justify-around !important; padding: 8px 0 10px 0; z-index: 9999 !important; }
+    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 8px 0 10px 0; z-index: 9999; }
     .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 0.75rem; gap: 2px; cursor: pointer; text-decoration: none; position: relative; }
     .nav-item i { display: block; font-size: 1.2rem; margin-bottom: 2px; }
     .nav-item.active { color: var(--primary-color); font-weight: 600; }
@@ -392,7 +392,6 @@
     
     // บันทึกข้อมูลลง Supabase store_settings แบบเรียลไทม์
     async function saveData() {
-      // เซฟสำรองไว้ใน localStorage ป้องกันเน็ตหลุด
       localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
       
       try {
@@ -404,7 +403,6 @@
       }
     }
 
-    // ปิดการตัดเวลาล็อกอิน เพื่อไม่ให้เด้งหลุดตอนสลับหน้า/รีเฟรช
     function checkSessionTimeout() {
       return;
     }
@@ -429,7 +427,6 @@
       document.getElementById('headerStoreName').innerText = storeData.storeName || 'luvbeamshop';
       document.getElementById('heroStoreName').innerText = storeData.storeName || 'luvbeamshop';
 
-      // แสดงโลโก้ร้านที่หัวเว็บ (ถ้ามี)
       let logoContainer = document.getElementById('headerLogoContainer');
       let defaultIcon = document.getElementById('defaultStoreIcon');
       if(storeData.logoUrl) {
@@ -440,7 +437,6 @@
         defaultIcon.style.display = 'block';
       }
 
-      // แสดงแบนเนอร์หน้าร้าน (เต็มจอพอดี)
       let bannerBox = document.getElementById('welcomeBannerBox');
       if(storeData.banners && storeData.banners.length > 0) {
         let latestBanner = storeData.banners[storeData.banners.length - 1];
@@ -906,6 +902,7 @@
         storeData.loginTime = new Date().getTime();
         saveData();
         renderAll();
+        switchTab('account');
         showPopup("สำเร็จ 🛡️", "เข้าสู่ระบบในฐานะแอดมินเรียบร้อยแล้ว");
         return;
       }
@@ -922,6 +919,7 @@
         storeData.loginTime = new Date().getTime();
         saveData();
         renderAll();
+        switchTab('account');
         showPopup("สำเร็จ 🎉", "สมัครสมาชิกและเข้าสู่ระบบเรียบร้อยแล้ว");
       } else {
         let found = storeData.users.find(u => u.email === email && u.pass === pass);
@@ -931,6 +929,7 @@
         storeData.loginTime = new Date().getTime();
         saveData();
         renderAll();
+        switchTab('account');
         showPopup("สำเร็จ 👍", "เข้าสู่ระบบเรียบร้อยแล้ว");
       }
     }
