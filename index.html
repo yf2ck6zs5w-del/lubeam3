@@ -28,7 +28,7 @@
     .store-header { padding: 12px 16px 8px 16px; background: var(--card-bg); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid var(--border-color); }
     .top-brand-row { display: flex; align-items: center; justify-content: space-between; }
     .brand-logo-group { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.1rem; color: var(--text-brown); }
-    .header-logo-img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
+    .header-logo-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
     .header-icons { display: flex; gap: 14px; align-items: center; color: var(--text-brown); font-size: 1.1rem; cursor: pointer; }
 
     .credit-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin: 12px 16px; font-size: 0.85rem; }
@@ -137,7 +137,7 @@
 
       <section style="margin-bottom: 16px;">
         <div style="padding: 0 16px; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-          <i class="fa-solid fa-star" style="color: #f59e0b;"></i> รายการสินค้า (สินค้าแนะนำ)
+          <i class="fa-solid fa-star" style="color: #f59e0b;"></i> รายการสินค้าทั้งหมด
         </div>
         <div class="products-grid" id="productGridContainer"></div>
       </section>
@@ -362,15 +362,24 @@
     let currentCategoryFilter = 'all';
     let currentCategoryPageFilter = 'all';
 
+    // แปลง URL รูปภาพทั่วไปหรือจากเว็บฝากรูปให้เป็น Direct Image Link
+    function fixImageUrl(url) {
+      if(!url) return '';
+      url = url.trim();
+      if(url.includes('ibb.co/') && !url.includes('i.ibb.co/')) {
+        let code = url.split('ibb.co/')[1].split('/')[0];
+        return `https://i.ibb.co/${code}/image.jpg`;
+      }
+      return url;
+    }
+
     window.onload = async function() {
-      // ดึง session ผู้ใช้ออกจาก localStorage แยกเฉพาะอุปกรณ์นี้
       storeData.currentUser = localStorage.getItem('MY_CURRENT_USER');
       await loadFromStorage();
       renderAll();
       loadBankSettingsToFrontend();
     };
 
-    // โหลดข้อมูลจาก Supabase store_settings โดยไม่ดึง currentUser มาทับผู้ใช้ปัจจุบัน
     async function loadFromStorage() {
       try {
         let { data, error } = await supabaseClient
@@ -380,23 +389,21 @@
           .single();
 
         if (data && data.settings) {
-          // เก็บ currentUser เดิมไว้
           let localUser = storeData.currentUser || localStorage.getItem('MY_CURRENT_USER');
           storeData = Object.assign(storeData, data.settings);
-          // เอา localUser คืนกลับมา ไม่ยอมให้ค่า null ใน Supabase มาทับ
           storeData.currentUser = localUser;
         }
       } catch (e) {
-        console.log("Load from Supabase error, fallback to local:", e);
+        console.log("Load error, fallback local:", e);
         const data = localStorage.getItem('POTATO_STORE_DATA');
         if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
       }
 
       if(!storeData.users) storeData.users = [];
+      if(!storeData.products) storeData.products = [];
       if(!storeData.banners) storeData.banners = [];
     }
     
-    // บันทึกข้อมูลลง Supabase store_settings แบบเรียลไทม์ (ละเว้น currentUser ในฐานข้อมูล)
     async function saveData() {
       if(storeData.currentUser) {
         localStorage.setItem('MY_CURRENT_USER', storeData.currentUser);
@@ -406,7 +413,6 @@
 
       localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
       
-      // ส่งข้อมูลไปเซฟที่ Supabase โดยล้าง currentUser ออกไม่ให้ไปกระทบผู้ใช้อื่น
       let dataToSave = JSON.parse(JSON.stringify(storeData));
       delete dataToSave.currentUser;
 
@@ -415,12 +421,8 @@
           .from('store_settings')
           .upsert({ id: 1, settings: dataToSave });
       } catch (e) {
-        console.log("Save to Supabase error:", e);
+        console.log("Save error:", e);
       }
-    }
-
-    function checkSessionTimeout() {
-      return;
     }
 
     function showPopup(title, msg) {
@@ -445,8 +447,10 @@
 
       let logoContainer = document.getElementById('headerLogoContainer');
       let defaultIcon = document.getElementById('defaultStoreIcon');
-      if(storeData.logoUrl) {
-        logoContainer.innerHTML = `<img src="${storeData.logoUrl}" class="header-logo-img">`;
+      
+      let formattedLogo = fixImageUrl(storeData.logoUrl);
+      if(formattedLogo) {
+        logoContainer.innerHTML = `<img src="${formattedLogo}" class="header-logo-img" onerror="this.onerror=null; this.parentElement.innerHTML=''; document.getElementById('defaultStoreIcon').style.display='block';">`;
         defaultIcon.style.display = 'none';
       } else {
         logoContainer.innerHTML = '';
@@ -455,7 +459,7 @@
 
       let bannerBox = document.getElementById('welcomeBannerBox');
       if(storeData.banners && storeData.banners.length > 0) {
-        let latestBanner = storeData.banners[storeData.banners.length - 1];
+        let latestBanner = fixImageUrl(storeData.banners[storeData.banners.length - 1]);
         bannerBox.innerHTML = `<img src="${latestBanner}">`;
       } else {
         bannerBox.innerHTML = `
@@ -531,10 +535,9 @@
       filterAndRenderProducts();
     }
 
+    // แสดงสินค้าทั้งหมดที่บันทึกไว้ในสต๊อก
     function filterAndRenderProducts() {
       let list = storeData.products || [];
-      let featuredIds = storeData.featuredIds || [];
-      list = list.filter(p => featuredIds.includes(p.id));
       if(currentCategoryFilter !== 'all') {
         list = list.filter(p => (p.category || 'ทั่วไป') === currentCategoryFilter);
       }
@@ -654,7 +657,7 @@
           if(obj.accName) document.getElementById('displayAccName').innerText = "ชื่อบัญชี: " + obj.accName;
           if(obj.bankAcc) document.getElementById('displayAccNo').innerText = obj.bankAcc;
           if(obj.qrUrl) {
-            document.getElementById('displayQrImg').src = obj.qrUrl;
+            document.getElementById('displayQrImg').src = fixImageUrl(obj.qrUrl);
             document.getElementById('qrContainerBox').style.display = 'block';
           }
         }
@@ -737,11 +740,12 @@
       container.innerHTML = items.map(p => {
         let stockCount = p.stockList ? p.stockList.length : 0;
         let isAvail = stockCount > 0;
+        let formattedImg = fixImageUrl(p.image);
         return `
           <div class="product-card">
             <div class="product-img-box" onclick="openBuyModal(${p.id})">
               <span class="stock-badge ${isAvail ? 'in' : 'out'}">${isAvail ? 'มีสินค้า ('+stockCount+')' : 'สินค้าหมด'}</span>
-              ${p.image ? `<img src="${p.image}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150';">` : '<i class="fa-solid fa-box" style="font-size:2rem; color:var(--text-muted);"></i>'}
+              ${formattedImg ? `<img src="${formattedImg}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150';">` : '<i class="fa-solid fa-box" style="font-size:2rem; color:var(--text-muted);"></i>'}
             </div>
             <div class="product-info">
               <div class="product-name">${p.name}</div>
@@ -765,7 +769,8 @@
         document.getElementById('ruleModalProductPrice').innerText = `ราคา: ฿${p.price}.-`;
         document.getElementById('ruleModalContent').innerText = p.rule || "ไม่มีรายละเอียดเพิ่มเติม";
         let imgEl = document.getElementById('ruleModalProductImg');
-        if(p.image) { imgEl.src = p.image; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
+        let formattedImg = fixImageUrl(p.image);
+        if(formattedImg) { imgEl.src = formattedImg; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
         document.getElementById('productRuleModal').classList.add('open');
       }
     }
@@ -820,10 +825,11 @@
       let total = 0;
       container.innerHTML = storeData.cart.map((c, idx) => {
         total += c.price;
+        let formattedImg = fixImageUrl(c.image);
         return `
           <div style="display:flex; align-items:center; gap:10px; padding:10px; margin-bottom:8px; background:#fff; border:1px solid var(--border-color); border-radius:var(--radius-md);">
             <div style="width:50px; height:50px; background:var(--card-cream); border-radius:8px; overflow:hidden; flex-shrink:0;">
-              ${c.image ? `<img src="${c.image}" style="width:100%; height:100%; object-fit:cover;">` : '<i class="fa-solid fa-box"></i>'}
+              ${formattedImg ? `<img src="${formattedImg}" style="width:100%; height:100%; object-fit:cover;">` : '<i class="fa-solid fa-box"></i>'}
             </div>
             <div style="flex:1; overflow:hidden;">
               <div style="font-weight:600; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.name}</div>
