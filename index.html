@@ -369,8 +369,11 @@
       loadBankSettingsToFrontend();
     };
 
-    // โหลดข้อมูลจาก Supabase store_settings
+    // โหลดข้อมูลจาก Supabase store_settings โดยล็อกสถานะผู้ใช้ปัจจุบันไว้ไม่ให้หลุด
     async function loadFromStorage() {
+      let savedUser = storeData.currentUser;
+      let savedLoginTime = storeData.loginTime;
+
       try {
         let { data, error } = await supabaseClient
           .from('store_settings')
@@ -386,6 +389,12 @@
         const data = localStorage.getItem('POTATO_STORE_DATA');
         if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
       }
+
+      if (!storeData.currentUser && savedUser) {
+        storeData.currentUser = savedUser;
+        storeData.loginTime = savedLoginTime;
+      }
+
       if(!storeData.users) storeData.users = [];
       if(!storeData.banners) storeData.banners = [];
     }
