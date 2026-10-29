@@ -362,7 +362,6 @@
     let currentCategoryFilter = 'all';
     let currentCategoryPageFilter = 'all';
 
-    // แปลง URL รูปภาพทั่วไปหรือจากเว็บฝากรูปให้เป็น Direct Image Link
     function fixImageUrl(url) {
       if(!url) return '';
       url = url.trim();
@@ -535,7 +534,6 @@
       filterAndRenderProducts();
     }
 
-    // แสดงสินค้าทั้งหมดที่บันทึกไว้ในสต๊อก
     function filterAndRenderProducts() {
       let list = storeData.products || [];
       if(currentCategoryFilter !== 'all') {
