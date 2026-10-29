@@ -6,6 +6,10 @@
   <title>Admin - luvbeamshop</title>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     :root {
       --bg-cream: #fffaf5; --card-bg: #ffffff; --text-brown: #5a3e2b;
@@ -319,6 +323,11 @@
   </div>
 
   <script>
+    // Supabase Configuration
+    const SUPABASE_URL = "https://fihpvcelbiiiqvmpktbe.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_yHd5YoHlEJtqhUVoIY4yRw_xenvICuo";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const ADMIN_EMAIL = "tongty212@gmail.com";
     let storeData = { storeName: 'luvbeamshop', logoUrl: '', themeColor: '#8c5a3c', products: [], featuredIds: [], users: [], banners: [], faq: [], topupHistory: [], orderHistory: [] };
     let editingStockProductId = null;
