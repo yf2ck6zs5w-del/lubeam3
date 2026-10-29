@@ -337,7 +337,7 @@
       renderAllAdmin();
     };
 
-    // โหลดข้อมูลจาก Supabase พร้อมตัวสำรอง localStorage
+    // โหลดข้อมูลจาก Supabase โดยตรง ป้องกันการดึงค่าเก่ามารีเซ็ตทับ
     async function loadData() {
       try {
         let { data, error } = await supabaseClient
@@ -348,11 +348,18 @@
 
         if (data && data.settings) {
           storeData = Object.assign(storeData, data.settings);
+          localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
+          return;
         }
       } catch (e) {
-        console.log("Load from Supabase error, fallback to local:", e);
-        const data = localStorage.getItem('POTATO_STORE_DATA');
-        if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
+        console.log("Load from Supabase error:", e);
+      }
+
+      const local = localStorage.getItem('POTATO_STORE_DATA');
+      if(local) { 
+        try { 
+          storeData = Object.assign(storeData, JSON.parse(local)); 
+        } catch(e){} 
       }
 
       if(!storeData.topupHistory) storeData.topupHistory = [];
@@ -362,16 +369,20 @@
       if(!storeData.users) storeData.users = [];
     }
 
-    // ป้องกันการเด้งหลุด: บันทึกข้อมูลลง Supabase และสำรองในเครื่องแบบปลอดภัย
+    // บันทึกข้อมูลลง Supabase แบบปลอดภัย
     async function saveData() {
       localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
       
       try {
-        await supabaseClient
+        let { error } = await supabaseClient
           .from('store_settings')
           .upsert({ id: 1, settings: storeData });
+        
+        if (error) {
+          console.error("Supabase Save Error:", error.message);
+        }
       } catch (e) {
-        console.log("Save to Supabase error:", e);
+        console.log("Save to Supabase exception:", e);
       }
     }
 
