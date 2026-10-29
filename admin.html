@@ -146,7 +146,7 @@
         <div class="card">
           <div style="font-weight: 700; margin-bottom: 10px;">⚙️ ตั้งค่าเว็บไซต์ & ธีมสี</div>
           <div class="form-group"><label>ชื่อร้านค้า</label><input type="text" id="settingStoreName" class="form-control"></div>
-          <div class="form-group"><label>ลิงก์โลโก้ร้าน</label><input type="text" id="settingLogoUrl" class="form-control"></div>
+          <div class="form-group"><label>ลิงก์โลโก้ร้าน (รองรับ i.ibb.co)</label><input type="text" id="settingLogoUrl" class="form-control"></div>
           <div class="form-group">
             <label>เลือกโทนสีหลักของร้าน</label>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -332,12 +332,25 @@
     let storeData = { storeName: 'luvbeamshop', logoUrl: '', themeColor: '#8c5a3c', products: [], featuredIds: [], users: [], banners: [], faq: [], topupHistory: [], orderHistory: [] };
     let editingStockProductId = null;
 
+    // ฟังก์ชันแปลงลิงก์รูปภาพให้อัตโนมัติ (รองรับกรณีเผลอพิมพ์ iibb.co หรือลิงก์หน้าเว็บ)
+    function fixImageUrl(url) {
+      if(!url) return '';
+      url = url.trim();
+      if(url.includes('iibb.co/')) {
+        url = url.replace('iibb.co/', 'i.ibb.co/');
+      }
+      if(url.includes('ibb.co/') && !url.includes('i.ibb.co/')) {
+        let code = url.split('ibb.co/')[1].split('/')[0];
+        return `https://i.ibb.co/${code}/image.jpg`;
+      }
+      return url;
+    }
+
     window.onload = async function() {
       await loadData();
       renderAllAdmin();
     };
 
-    // โหลดข้อมูลจาก Supabase โดยตรง ป้องกันการดึงค่าเก่ามารีเซ็ตทับ
     async function loadData() {
       try {
         let { data, error } = await supabaseClient
@@ -369,14 +382,16 @@
       if(!storeData.users) storeData.users = [];
     }
 
-    // บันทึกข้อมูลลง Supabase แบบปลอดภัย
     async function saveData() {
       localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
       
+      let dataToSave = JSON.parse(JSON.stringify(storeData));
+      delete dataToSave.currentUser; // ป้องกันการส่ง session ตัวตนแอดมินไปทับซ้อน
+
       try {
         let { error } = await supabaseClient
           .from('store_settings')
-          .upsert({ id: 1, settings: storeData });
+          .upsert({ id: 1, settings: dataToSave });
         
         if (error) {
           console.error("Supabase Save Error:", error.message);
@@ -449,7 +464,7 @@
 
     async function saveSettings() {
       storeData.storeName = document.getElementById('settingStoreName').value.trim() || 'luvbeamshop';
-      storeData.logoUrl = document.getElementById('settingLogoUrl').value.trim();
+      storeData.logoUrl = fixImageUrl(document.getElementById('settingLogoUrl').value);
       storeData.themeColor = document.getElementById('settingThemeColor').value;
       await saveData();
       renderAllAdmin();
@@ -461,7 +476,7 @@
       let price = parseFloat(document.getElementById('newProdPrice').value) || 0;
       let agentPrice = parseFloat(document.getElementById('newProdAgentPrice').value) || 0;
       let category = document.getElementById('newProdCategory').value.trim() || 'ทั่วไป';
-      let image = document.getElementById('newProdImg').value.trim();
+      let image = fixImageUrl(document.getElementById('newProdImg').value);
       let rule = document.getElementById('newProdRule').value.trim();
       let stockRaw = document.getElementById('newProdStock').value.trim();
 
@@ -490,29 +505,32 @@
         container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:10px;">ยังไม่มีสินค้าในระบบ</p>`;
         return;
       }
-      container.innerHTML = storeData.products.map(p => `
-        <div class="product-admin-card">
-          <div class="product-admin-top">
-            <div class="product-admin-img">
-              ${p.image ? `<img src="${p.image}" style="width:100%; height:100%; object-fit:cover;">` : '📦'}
-            </div>
-            <div style="flex:1; min-width:0;">
-              <div style="font-weight:600; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                ${p.name} <span style="font-size:0.68rem; background:#fef0e6; color:var(--btn-brown); padding:1px 6px; border-radius:4px; margin-left:4px;">${p.category || 'ทั่วไป'}</span>
+      container.innerHTML = storeData.products.map(p => {
+        let formattedImg = fixImageUrl(p.image);
+        return `
+          <div class="product-admin-card">
+            <div class="product-admin-top">
+              <div class="product-admin-img">
+                ${formattedImg ? `<img src="${formattedImg}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null; this.src='https://via.placeholder.com/150';">` : '📦'}
               </div>
-              <div style="font-size:0.75rem; color:var(--text-muted);">ทั่วไป: ฿${p.price} | ตัวแทน: ฿${p.agentPrice}</div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-weight:600; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  ${p.name} <span style="font-size:0.68rem; background:#fef0e6; color:var(--btn-brown); padding:1px 6px; border-radius:4px; margin-left:4px;">${p.category || 'ทั่วไป'}</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">ทั่วไป: ฿${p.price} | ตัวแทน: ฿${p.agentPrice}</div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="action-btn edit" onclick="openEditProduct(${p.id})"><i class="fa-solid fa-pen"></i></button>
+                <button class="action-btn delete" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash"></i></button>
+              </div>
             </div>
-            <div style="display:flex; gap:6px;">
-              <button class="action-btn edit" onclick="openEditProduct(${p.id})"><i class="fa-solid fa-pen"></i></button>
-              <button class="action-btn delete" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash"></i></button>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); margin-top:4px; padding-top:8px;">
+              <span style="font-size:0.78rem; font-weight:600; color:#137333;">สต็อกพร้อมขาย: ${p.stockList ? p.stockList.length : 0} ชิ้น</span>
+              <button class="action-btn stock" onclick="openStockModal(${p.id})"><i class="fa-solid fa-boxes-stacked"></i> จัดการสต็อก</button>
             </div>
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); margin-top:4px; padding-top:8px;">
-            <span style="font-size:0.78rem; font-weight:600; color:#137333;">สต็อกพร้อมขาย: ${p.stockList ? p.stockList.length : 0} ชิ้น</span>
-            <button class="action-btn stock" onclick="openStockModal(${p.id})"><i class="fa-solid fa-boxes-stacked"></i> จัดการสต็อก</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function renderFeaturedChecklist() {
@@ -595,7 +613,7 @@
         p.price = parseFloat(document.getElementById('editProdPrice').value) || 0;
         p.agentPrice = parseFloat(document.getElementById('editProdAgentPrice').value) || 0;
         p.category = document.getElementById('editProdCategory').value.trim();
-        p.image = document.getElementById('editProdImg').value.trim();
+        p.image = fixImageUrl(document.getElementById('editProdImg').value);
         p.rule = document.getElementById('editProdRule').value.trim();
         await saveData();
         renderAllAdmin();
@@ -613,7 +631,7 @@
     }
 
     async function addBanner() {
-      let url = document.getElementById('bannerImgInput').value.trim();
+      let url = fixImageUrl(document.getElementById('bannerImgInput').value);
       if(!url) return;
       if(!storeData.banners) storeData.banners = [];
       storeData.banners.push(url);
@@ -631,7 +649,7 @@
       }
       container.innerHTML = storeData.banners.map((b, idx) => `
         <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:10px;">
-          <img src="${b}" style="width:80px; height:40px; object-fit:cover; border-radius:6px;">
+          <img src="${b}" style="width:80px; height:40px; object-fit:cover; border-radius:6px;" onerror="this.onerror=null; this.src='https://via.placeholder.com/150';">
           <button class="action-btn delete" onclick="removeBanner(${idx})"><i class="fa-solid fa-trash"></i></button>
         </div>
       `).join('');
@@ -786,7 +804,7 @@
       let bankName = document.getElementById('bankNameInput').value;
       let accName = document.getElementById('bankAccNameInput').value;
       let bankAcc = document.getElementById('bankAccNoInput').value;
-      let qrUrl = document.getElementById('bankQrInput').value;
+      let qrUrl = fixImageUrl(document.getElementById('bankQrInput').value);
       localStorage.setItem('POTATO_ADMIN_SETTINGS', JSON.stringify({ bankName, accName, bankAcc, qrUrl }));
       showPopup("สำเร็จ", "บันทึกข้อมูลการชำระเงินเรียบร้อย");
     }
