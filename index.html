@@ -363,17 +363,15 @@
     let currentCategoryPageFilter = 'all';
 
     window.onload = async function() {
+      // ดึง session ผู้ใช้ออกจาก localStorage แยกเฉพาะอุปกรณ์นี้
+      storeData.currentUser = localStorage.getItem('MY_CURRENT_USER');
       await loadFromStorage();
-      checkSessionTimeout();
       renderAll();
       loadBankSettingsToFrontend();
     };
 
-    // โหลดข้อมูลจาก Supabase store_settings โดยล็อกสถานะผู้ใช้ปัจจุบันไว้ไม่ให้หลุด
+    // โหลดข้อมูลจาก Supabase store_settings โดยไม่ดึง currentUser มาทับผู้ใช้ปัจจุบัน
     async function loadFromStorage() {
-      let savedUser = storeData.currentUser;
-      let savedLoginTime = storeData.loginTime;
-
       try {
         let { data, error } = await supabaseClient
           .from('store_settings')
@@ -382,7 +380,11 @@
           .single();
 
         if (data && data.settings) {
+          // เก็บ currentUser เดิมไว้
+          let localUser = storeData.currentUser || localStorage.getItem('MY_CURRENT_USER');
           storeData = Object.assign(storeData, data.settings);
+          // เอา localUser คืนกลับมา ไม่ยอมให้ค่า null ใน Supabase มาทับ
+          storeData.currentUser = localUser;
         }
       } catch (e) {
         console.log("Load from Supabase error, fallback to local:", e);
@@ -390,23 +392,28 @@
         if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
       }
 
-      if (!storeData.currentUser && savedUser) {
-        storeData.currentUser = savedUser;
-        storeData.loginTime = savedLoginTime;
-      }
-
       if(!storeData.users) storeData.users = [];
       if(!storeData.banners) storeData.banners = [];
     }
     
-    // บันทึกข้อมูลลง Supabase store_settings แบบเรียลไทม์
+    // บันทึกข้อมูลลง Supabase store_settings แบบเรียลไทม์ (ละเว้น currentUser ในฐานข้อมูล)
     async function saveData() {
+      if(storeData.currentUser) {
+        localStorage.setItem('MY_CURRENT_USER', storeData.currentUser);
+      } else {
+        localStorage.removeItem('MY_CURRENT_USER');
+      }
+
       localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
       
+      // ส่งข้อมูลไปเซฟที่ Supabase โดยล้าง currentUser ออกไม่ให้ไปกระทบผู้ใช้อื่น
+      let dataToSave = JSON.parse(JSON.stringify(storeData));
+      delete dataToSave.currentUser;
+
       try {
         await supabaseClient
           .from('store_settings')
-          .upsert({ id: 1, settings: storeData });
+          .upsert({ id: 1, settings: dataToSave });
       } catch (e) {
         console.log("Save to Supabase error:", e);
       }
@@ -462,17 +469,20 @@
       let displayCredit = 0;
       let displayUsername = "";
 
-      if(storeData.currentUser) {
+      let activeUser = storeData.currentUser || localStorage.getItem('MY_CURRENT_USER');
+
+      if(activeUser) {
+        storeData.currentUser = activeUser;
         document.getElementById('loggedInAccountView').style.display = 'block';
         document.getElementById('loggedOutAccountView').style.display = 'none';
 
-        if(storeData.currentUser === ADMIN_EMAIL) {
+        if(activeUser === ADMIN_EMAIL) {
           displayCredit = storeData.adminCredit !== undefined ? storeData.adminCredit : 100000;
           displayUsername = "ผู้ดูแลระบบ (Admin)";
           document.getElementById('adminMenuBtnContainer').style.display = 'block';
           document.getElementById('editEmailInput').value = ADMIN_EMAIL;
         } else {
-          let u = storeData.users.find(x => x.email === storeData.currentUser);
+          let u = storeData.users.find(x => x.email === activeUser);
           if(u) {
             displayCredit = u.credit || 0;
             displayUsername = u.username || u.email;
@@ -627,7 +637,7 @@
           u.email = newEmail;
           if(newPass) u.pass = newPass;
           storeData.currentUser = newEmail;
-          storeData.loginTime = new Date().getTime();
+          localStorage.setItem('MY_CURRENT_USER', newEmail);
           saveData();
           showPopup("สำเร็จ", "อัปเดตข้อมูลส่วนตัวเรียบร้อยแล้ว");
         }
@@ -908,7 +918,7 @@
 
       if(email === ADMIN_EMAIL) {
         storeData.currentUser = ADMIN_EMAIL;
-        storeData.loginTime = new Date().getTime();
+        localStorage.setItem('MY_CURRENT_USER', ADMIN_EMAIL);
         saveData();
         renderAll();
         switchTab('account');
@@ -925,7 +935,7 @@
 
         storeData.users.push({ username, email, pass, credit: 0, role: 'customer' });
         storeData.currentUser = email;
-        storeData.loginTime = new Date().getTime();
+        localStorage.setItem('MY_CURRENT_USER', email);
         saveData();
         renderAll();
         switchTab('account');
@@ -935,7 +945,7 @@
         if(!found) return showPopup("เข้าสู่ระบบไม่สำเร็จ ❌", "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         
         storeData.currentUser = found.email;
-        storeData.loginTime = new Date().getTime();
+        localStorage.setItem('MY_CURRENT_USER', found.email);
         saveData();
         renderAll();
         switchTab('account');
@@ -945,7 +955,7 @@
 
     function logoutUser() {
       storeData.currentUser = null;
-      storeData.loginTime = null;
+      localStorage.removeItem('MY_CURRENT_USER');
       saveData();
       renderAll();
       showPopup("ออกจากระบบ", "ออกจากระบบเรียบร้อยแล้ว");
