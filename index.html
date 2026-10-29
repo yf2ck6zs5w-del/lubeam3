@@ -6,6 +6,10 @@
   <title id="pageTitle">luvbeamshop</title>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     :root {
       --bg-cream: #fff8f0; --card-bg: #ffffff; --card-cream: #fef0e6;
@@ -17,7 +21,6 @@
     body { background-color: var(--bg-cream); color: var(--text-brown); min-height: 100vh; padding-bottom: 70px; }
     .app-container { max-width: 480px; margin: 0 auto; background: var(--bg-cream); min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(230, 92, 0, 0.08); }
     
-    /* ซ่อนป้าย Netlify ถาวร */
     net-lify-badge, .netlify-badge, div[id^="netlify-badge"], iframe[src*="netlify"], div[class*="netlify"] {
       display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; position: absolute !important; top: -9999px !important;
     }
@@ -25,6 +28,7 @@
     .store-header { padding: 12px 16px 8px 16px; background: var(--card-bg); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid var(--border-color); }
     .top-brand-row { display: flex; align-items: center; justify-content: space-between; }
     .brand-logo-group { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.1rem; color: var(--text-brown); }
+    .header-logo-img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
     .header-icons { display: flex; gap: 14px; align-items: center; color: var(--text-brown); font-size: 1.1rem; cursor: pointer; }
 
     .credit-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin: 12px 16px; font-size: 0.85rem; }
@@ -39,8 +43,8 @@
     .cat-pill { background: var(--card-bg); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; color: var(--text-brown); white-space: nowrap; cursor: pointer; transition: all 0.2s; }
     .cat-pill.active { background: var(--btn-brown); color: #fff; border-color: var(--btn-brown); }
 
-    .welcome-banner { margin: 0 16px 16px 16px; background: linear-gradient(135deg, #5c4033, #2c1810); color: #fff; padding: 20px; border-radius: 16px; }
-    .welcome-banner h3 { font-size: 1.2rem; margin-bottom: 2px; color: #ffd700; }
+    .welcome-banner { margin: 0 16px 16px 16px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background: var(--card-cream); }
+    .welcome-banner img { width: 100%; height: 100%; max-height: 200px; display: block; object-fit: cover; border-radius: 16px; }
 
     .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 16px; }
     .product-card { background: var(--card-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; position: relative; }
@@ -86,7 +90,8 @@
     <header class="store-header">
       <div class="top-brand-row">
         <div class="brand-logo-group">
-          <i class="fa-solid fa-store" style="color: #d97706;"></i>
+          <div id="headerLogoContainer"></div>
+          <i class="fa-solid fa-store" id="defaultStoreIcon" style="color: #d97706;"></i>
           <span class="brand-title" id="headerStoreName">luvbeamshop</span>
         </div>
         <div class="header-icons">
@@ -122,9 +127,12 @@
         <div class="cat-pill active" onclick="filterByCategory('all')">ทั้งหมด</div>
       </div>
 
-      <div class="welcome-banner">
-        <div style="font-size: 0.8rem; opacity: 0.9;">ยินดีต้อนรับสู่</div>
-        <h3 id="heroStoreName">luvbeamshop</h3>
+      <!-- แบนเนอร์ / ข้อความต้อนรับ -->
+      <div class="welcome-banner" id="welcomeBannerBox">
+        <div style="padding: 20px; background: linear-gradient(135deg, #5c4033, #2c1810); color: #fff;">
+          <div style="font-size: 0.8rem; opacity: 0.9;">ยินดีต้อนรับสู่</div>
+          <h3 id="heroStoreName">luvbeamshop</h3>
+        </div>
       </div>
 
       <section style="margin-bottom: 16px;">
@@ -341,8 +349,13 @@
   </div>
 
   <script>
+    // Supabase Configuration
+    const SUPABASE_URL = "https://fihpvcelbiiiqvmpktbe.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_yHd5YoHlEJtqhUVoIY4yRw_xenvICuo";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const ADMIN_EMAIL = "tongty212@gmail.com";
-    let storeData = { storeName: 'luvbeamshop', currentUser: null, loginTime: null, adminCredit: 100000, users: [], products: [], featuredIds: [], cart: [], topupHistory: [], orderHistory: [], faq: [] };
+    let storeData = { storeName: 'luvbeamshop', logoUrl: '', banners: [], currentUser: null, loginTime: null, adminCredit: 100000, users: [], products: [], featuredIds: [], cart: [], topupHistory: [], orderHistory: [], faq: [] };
     let pendingBuyProductId = null;
     let isRegisterView = false;
     let lastPurchasedStockText = "";
@@ -360,6 +373,7 @@
       const data = localStorage.getItem('POTATO_STORE_DATA');
       if(data) { try { storeData = Object.assign(storeData, JSON.parse(data)); } catch(e){} }
       if(!storeData.users) storeData.users = [];
+      if(!storeData.banners) storeData.banners = [];
     }
     
     function saveData() { localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData)); }
@@ -393,6 +407,31 @@
       checkSessionTimeout();
       document.getElementById('headerStoreName').innerText = storeData.storeName || 'luvbeamshop';
       document.getElementById('heroStoreName').innerText = storeData.storeName || 'luvbeamshop';
+
+      // แสดงโลโก้ร้านที่หัวเว็บ (ถ้ามี)
+      let logoContainer = document.getElementById('headerLogoContainer');
+      let defaultIcon = document.getElementById('defaultStoreIcon');
+      if(storeData.logoUrl) {
+        logoContainer.innerHTML = `<img src="${storeData.logoUrl}" class="header-logo-img">`;
+        defaultIcon.style.display = 'none';
+      } else {
+        logoContainer.innerHTML = '';
+        defaultIcon.style.display = 'block';
+      }
+
+      // แสดงแบนเนอร์หน้าร้าน (เต็มจอพอดี)
+      let bannerBox = document.getElementById('welcomeBannerBox');
+      if(storeData.banners && storeData.banners.length > 0) {
+        let latestBanner = storeData.banners[storeData.banners.length - 1];
+        bannerBox.innerHTML = `<img src="${latestBanner}">`;
+      } else {
+        bannerBox.innerHTML = `
+          <div style="padding: 20px; background: linear-gradient(135deg, #5c4033, #2c1810); color: #fff;">
+            <div style="font-size: 0.8rem; opacity: 0.9;">ยินดีต้อนรับสู่</div>
+            <h3 id="heroStoreName">${storeData.storeName || 'luvbeamshop'}</h3>
+          </div>
+        `;
+      }
 
       let displayCredit = 0;
       let displayUsername = "";
