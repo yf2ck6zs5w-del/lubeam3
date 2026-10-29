@@ -337,7 +337,7 @@
       renderAllAdmin();
     };
 
-    // โหลดข้อมูลจาก Supabase store_settings
+    // โหลดข้อมูลจาก Supabase พร้อมตัวสำรอง localStorage
     async function loadData() {
       try {
         let { data, error } = await supabaseClient
@@ -362,7 +362,7 @@
       if(!storeData.users) storeData.users = [];
     }
 
-    // บันทึกข้อมูลลง Supabase store_settings และ localStorage สำรอง
+    // ป้องกันการเด้งหลุด: บันทึกข้อมูลลง Supabase และสำรองในเครื่องแบบปลอดภัย
     async function saveData() {
       localStorage.setItem('POTATO_STORE_DATA', JSON.stringify(storeData));
       
